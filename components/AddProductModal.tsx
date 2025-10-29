@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ProductUnit } from '../types';
 
 interface AddProductModalProps {
-  onAdd: (name: string, category: string, unit: ProductUnit, note: string, quantity: number) => void;
+  onAdd: (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock?: number) => void;
   onClose: () => void;
   categories: string[];
 }
@@ -13,12 +13,15 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose, categ
   const [unit, setUnit] = useState<ProductUnit>(ProductUnit.Units);
   const [note, setNote] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [minimumStock, setMinimumStock] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numQuantity = parseFloat(quantity);
+    const numMinimumStock = minimumStock ? parseFloat(minimumStock) : undefined;
+
     if (name.trim() && category && !isNaN(numQuantity) && numQuantity >= 0) {
-      onAdd(name.trim(), category, unit, note.trim(), numQuantity);
+      onAdd(name.trim(), category, unit, note.trim(), numQuantity, numMinimumStock);
     } else if (!category) {
       alert('Por favor, crea una categoría en la configuración de la casa antes de añadir un producto.');
     }
@@ -86,6 +89,22 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose, categ
                     ))}
                 </div>
               </div>
+          </div>
+          <div className="mb-4">
+            <label htmlFor="minimumStock" className="block text-sm font-medium text-gray-700 mb-1">
+                Stock Mínimo (Opcional)
+            </label>
+            <input
+                id="minimumStock"
+                type="number"
+                value={minimumStock}
+                onChange={(e) => setMinimumStock(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Ej: 2 (avisa cuando queden 2)"
+                step="any"
+                min="0"
+            />
+            <p className="text-xs text-gray-500 mt-1">Recibirás un aviso para comprar cuando la cantidad llegue a este número.</p>
           </div>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>

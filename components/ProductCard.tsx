@@ -47,7 +47,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
   };
 
   const handleDecrement = () => {
-    const newQuantity = Math.max(0, product.quantity - 1);
+    const isSliderCondition = product.quantity > 0 && product.quantity <= 1 && product.unit === ProductUnit.Units;
+    const newQuantity = isSliderCondition ? 0 : Math.max(0, product.quantity - 1);
     onQuantityChange(product.id, newQuantity);
   };
 
@@ -58,6 +59,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
   const isOutOfStock = product.quantity === 0;
   const cardStyle = isOutOfStock ? 'opacity-60 border-red-300' : 'border-transparent';
   const categoryStyle = getCategoryStyle(product.category);
+
+  const showSlider = product.quantity > 0 && product.quantity <= 1 && product.unit === ProductUnit.Units;
 
   return (
     <div className={`bg-white rounded-xl shadow-lg p-4 flex flex-col justify-between transition-all duration-300 border-2 ${cardStyle} relative`}>
@@ -73,32 +76,55 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
         )}
         {isOutOfStock && <p className="text-red-500 text-sm font-semibold mt-1">Sin stock</p>}
       </div>
-      <div className="flex items-center justify-center mt-4 space-x-2">
-        <button
-          onClick={handleDecrement}
-          disabled={isOutOfStock}
-          className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-red-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 disabled:bg-gray-300 disabled:cursor-not-allowed pb-0.5"
-        >
-          −
-        </button>
-        <div className="flex items-baseline justify-center text-center">
-             <input
-                type="number"
-                value={product.quantity}
-                onChange={handleQuantityInputChange}
-                onBlur={handleBlur}
-                className="w-20 text-center bg-gray-50 rounded-md p-1 text-3xl font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                step={product.unit === ProductUnit.Grams || product.unit === ProductUnit.Kilograms ? "0.1" : "1"}
-                min="0"
-            />
-            <span className="text-lg font-semibold text-gray-500 ml-1">{product.unit}</span>
+      <div className="flex flex-col items-center justify-center mt-4">
+        {showSlider && (
+            <div className="w-full text-center mb-1">
+                <span className="text-sm font-semibold text-gray-600">Última unidad</span>
+            </div>
+        )}
+        <div className="flex items-center justify-center space-x-2 w-full">
+            <button
+            onClick={handleDecrement}
+            disabled={isOutOfStock}
+            className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-red-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 disabled:bg-gray-300 disabled:cursor-not-allowed pb-0.5"
+            >
+            −
+            </button>
+            
+            {showSlider ? (
+                <div className="flex-grow flex items-center justify-center mx-1">
+                    <input
+                        type="range"
+                        min="0.01"
+                        max="1"
+                        step="0.01"
+                        value={product.quantity}
+                        onChange={(e) => onQuantityChange(product.id, parseFloat(e.target.value))}
+                        className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                </div>
+            ) : (
+                <div className="flex items-baseline justify-center text-center">
+                    <input
+                        type="number"
+                        value={product.quantity}
+                        onChange={handleQuantityInputChange}
+                        onBlur={handleBlur}
+                        className="w-20 text-center bg-gray-50 rounded-md p-1 text-3xl font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        step={product.unit === ProductUnit.Grams || product.unit === ProductUnit.Kilograms ? "0.1" : "1"}
+                        min="0"
+                    />
+                    <span className="text-lg font-semibold text-gray-500 ml-1">{product.unit}</span>
+                </div>
+            )}
+
+            <button
+            onClick={handleIncrement}
+            className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-green-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 pb-0.5"
+            >
+            +
+            </button>
         </div>
-        <button
-          onClick={handleIncrement}
-          className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-green-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 pb-0.5"
-        >
-          +
-        </button>
       </div>
        {!isOutOfStock && (
          product.onShoppingList ? (

@@ -49,6 +49,38 @@ const ZeroQuantityModal: React.FC<{
   );
 };
 
+const MinimumStockModal: React.FC<{
+    product: Product;
+    onClose: () => void;
+    onConfirm: () => void;
+}> = ({ product, onClose, onConfirm }) => {
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm text-center">
+                <h2 className="text-xl font-bold mb-2 text-gray-800">Stock Mínimo Alcanzado</h2>
+                <p className="text-gray-600 mb-6">
+                    Quedan <span className="font-semibold">{product.quantity} {product.unit}</span> de <span className="font-semibold">{product.name}</span>. ¿Quieres anotarlo en la lista para comprar?
+                </p>
+                <div className="flex flex-col space-y-3">
+                    <button
+                        onClick={onConfirm}
+                        className="w-full px-4 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold"
+                    >
+                        Sí, anotar para comprar
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="w-full px-4 py-2 text-gray-700 hover:bg-gray-100 font-semibold"
+                    >
+                        No, más tarde
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onAcknowledgeNew }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [householdData, setHouseholdData] = useState<Household>(household);
@@ -57,6 +89,7 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
   const [showSettings, setShowSettings] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string | 'All'>('All');
   const [zeroQuantityProduct, setZeroQuantityProduct] = useState<Product | null>(null);
+  const [minStockProduct, setMinStockProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const unsubscribeProducts = DB.onProductsUpdate(household.id, (updatedProducts) => {
@@ -81,11 +114,23 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
   }, [isNew, onAcknowledgeNew]);
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    // Lógica de Stock Mínimo
+    if (
+        product.minimumStock !== undefined &&
+        product.quantity > product.minimumStock && // La cantidad anterior era mayor
+        newQuantity <= product.minimumStock &&   // La nueva cantidad es menor o igual
+        newQuantity > 0 &&                       // Aún no es cero
+        !product.onShoppingList                  // Y no está ya en la lista
+    ) {
+        setMinStockProduct({ ...product, quantity: newQuantity });
+    }
+
+    // Actualiza la cantidad en la BD y maneja el modal de stock cero
     if (newQuantity === 0) {
-      const product = products.find(p => p.id === productId);
-      if (product) {
-        setZeroQuantityProduct(product);
-      }
+      setZeroQuantityProduct(product);
     } else {
       DB.updateProduct(household.id, productId, { quantity: newQuantity });
     }
@@ -115,8 +160,8 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
     }
   };
 
-  const handleAddProduct = (name: string, category: string, unit: ProductUnit, note: string, quantity: number) => {
-    DB.addProduct(household.id, name, category, unit, note, quantity);
+  const handleAddProduct = (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock?: number) => {
+    DB.addProduct(household.id, name, category, unit, note, quantity, minimumStock);
     setIsAdding(false);
   };
 
@@ -155,7 +200,7 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
                 <div className="flex items-center space-x-3 pb-2">
                     <button
                         onClick={() => setCategoryFilter('All')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-full whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                        className={`px-4 py-2 text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
                             categoryFilter === 'All'
                             ? 'bg-indigo-600 text-white'
                             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
@@ -172,7 +217,7 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
                             <button
                                 key={cat}
                                 onClick={() => setCategoryFilter(cat)}
-                                className={`px-4 py-2 text-sm font-semibold rounded-full whitespace-nowrap transition-colors duration-200 truncate max-w-[150px] focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                                className={`px-4 py-2 text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0 transition-colors duration-200 truncate max-w-[150px] focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                                     isActive
                                     ? `${activeBg} text-white focus:ring-indigo-500`
                                     : `${style.bg} ${style.text} hover:opacity-80 focus:ring-indigo-400`
@@ -235,6 +280,17 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
             onClose={() => setZeroQuantityProduct(null)}
             onAddToShoppingList={handleConfirmAddToShoppingList}
             onDelete={handleConfirmDelete}
+        />
+      )}
+
+      {minStockProduct && (
+        <MinimumStockModal
+            product={minStockProduct}
+            onClose={() => setMinStockProduct(null)}
+            onConfirm={() => {
+                handleAddToShoppingList(minStockProduct.id);
+                setMinStockProduct(null);
+            }}
         />
       )}
 

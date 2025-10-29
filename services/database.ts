@@ -88,9 +88,10 @@ export const onProductsUpdate = (householdId: string, callback: (products: Produ
       const products = snapshot.docs.map((doc: any) => {
         const data = doc.data();
         return {
-        id: doc.id,
-        ...data,
-        onShoppingList: data.onShoppingList || false,
+          id: doc.id,
+          ...data,
+          onShoppingList: data.onShoppingList || false,
+          minimumStock: data.minimumStock, // Será undefined si no existe
       }}) as Product[];
       callback(products);
     }, (error: any) => {
@@ -100,17 +101,20 @@ export const onProductsUpdate = (householdId: string, callback: (products: Produ
   return unsubscribe; // Retornamos la función para desuscribirse
 };
 
-export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number): Promise<Product> => {
-  const newProductData = {
+export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock?: number): Promise<Product> => {
+  const newProductData: Partial<Product> = {
     name,
     category,
-    quantity: quantity,
+    quantity,
     unit,
     note,
     onShoppingList: false,
+    minimumStock,
   };
+
+  // Firestore omite las claves con valor 'undefined'
   const docRef = await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).add(newProductData);
-  return { id: docRef.id, ...newProductData };
+  return { id: docRef.id, ...newProductData } as Product;
 };
 
 export const updateProduct = async (householdId:string, productId: string, data: Partial<Omit<Product, 'id'>>) => {
