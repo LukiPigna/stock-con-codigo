@@ -1,5 +1,6 @@
-
 import React from 'react';
+// Fix: The `ReactDOM.render` API is deprecated in React 18.
+// The new `createRoot` API is imported from `react-dom/client`.
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
