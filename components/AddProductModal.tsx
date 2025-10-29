@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ProductUnit } from '../types';
 
 interface AddProductModalProps {
-  onAdd: (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock?: number) => void;
+  onAdd: (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number) => void;
   onClose: () => void;
   categories: string[];
 }
@@ -18,7 +18,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose, categ
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numQuantity = parseFloat(quantity);
-    const numMinimumStock = minimumStock ? parseFloat(minimumStock) : undefined;
+    const numMinimumStock = minimumStock ? parseFloat(minimumStock) : 0; // Default to 0
 
     if (name.trim() && category && !isNaN(numQuantity) && numQuantity >= 0) {
       onAdd(name.trim(), category, unit, note.trim(), numQuantity, numMinimumStock);

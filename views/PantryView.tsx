@@ -120,10 +120,11 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
     // Lógica de Stock Mínimo
     if (
         product.minimumStock !== undefined &&
-        product.quantity > product.minimumStock && // La cantidad anterior era mayor
-        newQuantity <= product.minimumStock &&   // La nueva cantidad es menor o igual
-        newQuantity > 0 &&                       // Aún no es cero
-        !product.onShoppingList                  // Y no está ya en la lista
+        product.minimumStock > 0 &&              // Only trigger if a minimum is set
+        product.quantity > product.minimumStock && // The previous quantity was higher
+        newQuantity <= product.minimumStock &&   // The new quantity is at or below the minimum
+        newQuantity > 0 &&                       // It's not out of stock yet
+        !product.onShoppingList                  // And it's not already on the list
     ) {
         setMinStockProduct({ ...product, quantity: newQuantity });
     }
@@ -160,9 +161,15 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
     }
   };
 
-  const handleAddProduct = (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock?: number) => {
-    DB.addProduct(household.id, name, category, unit, note, quantity, minimumStock);
-    setIsAdding(false);
+  const handleAddProduct = async (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number) => {
+    try {
+        await DB.addProduct(household.id, name, category, unit, note, quantity, minimumStock);
+        setIsAdding(false); // Cierra el modal solo si tiene éxito
+    } catch (error) {
+        console.error("Failed to add product:", error);
+        alert("Error: No se pudo agregar el producto. Por favor, revisa tu conexión a internet y las reglas de seguridad de tu base de datos Firestore.");
+        // No se cierra el modal para que el usuario no pierda los datos
+    }
   };
 
   const displayedProducts = useMemo(() => {
@@ -299,6 +306,7 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
             onClose={() => setMinStockProduct(null)}
             onConfirm={() => {
                 handleAddToShoppingList(minStockProduct.id);
+                DB.updateProduct(household.id, minStockProduct.id, { onShoppingList: true });
                 setMinStockProduct(null);
             }}
         />

@@ -67,7 +67,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
   const cardStyle = isOutOfStock ? 'opacity-60 border-red-300' : 'border-transparent';
   const categoryStyle = getCategoryStyle(product.category);
 
-  const showSlider = product.quantity > 0 && product.quantity <= 1 && product.unit === ProductUnit.Units;
+  // Expanded slider logic for units, kilograms, and grams
+  const showSliderForUnits = product.unit === ProductUnit.Units && product.quantity > 0 && product.quantity <= 1;
+  const showSliderForKg = product.unit === ProductUnit.Kilograms && product.quantity > 0 && product.quantity <= 1;
+  const showSliderForGr = product.unit === ProductUnit.Grams && product.quantity > 0 && product.quantity < 1000;
+  const showSlider = showSliderForUnits || showSliderForKg || showSliderForGr;
+  
+  let sliderProps = { min: 0, max: 1, step: 0.01 }; // Default for units
+  if (product.unit === ProductUnit.Grams) {
+      sliderProps = { min: 0, max: 1000, step: 10 };
+  } else if (product.unit === ProductUnit.Kilograms) {
+      sliderProps = { min: 0, max: 1, step: 0.01 }; // Explicitly for kg
+  }
+
 
   return (
     <div className={`bg-white rounded-xl shadow-lg p-4 flex flex-col justify-between transition-all duration-300 border-2 ${cardStyle} relative`}>
@@ -85,8 +97,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
       </div>
       <div className="flex flex-col items-center justify-center mt-4">
         {showSlider && (
-            <div className="w-full text-center mb-1">
-                <span className="text-sm font-semibold text-gray-600">Última unidad</span>
+             <div className="w-full text-center mb-1">
+                {product.unit === ProductUnit.Units ? (
+                    <span className="text-sm font-semibold text-gray-600">Última unidad</span>
+                ) : (
+                    <span className="text-sm font-semibold text-gray-600">
+                        ~{Math.round(product.unit === ProductUnit.Kilograms ? product.quantity * 1000 : product.quantity)} gr
+                    </span>
+                )}
             </div>
         )}
         <div className="flex items-center justify-center space-x-2 w-full">
@@ -102,9 +120,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
                 <div className="flex-grow flex items-center justify-center mx-1">
                     <input
                         type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
+                        min={sliderProps.min}
+                        max={sliderProps.max}
+                        step={sliderProps.step}
                         value={product.quantity}
                         onChange={(e) => onQuantityChange(product.id, parseFloat(e.target.value))}
                         className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"

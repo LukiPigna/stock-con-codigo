@@ -91,7 +91,7 @@ export const onProductsUpdate = (householdId: string, callback: (products: Produ
           id: doc.id,
           ...data,
           onShoppingList: data.onShoppingList || false,
-          minimumStock: data.minimumStock, // Será undefined si no existe
+          minimumStock: data.minimumStock !== undefined ? data.minimumStock : 0, // Default to 0 if missing
       }}) as Product[];
       callback(products);
     }, (error: any) => {
@@ -101,8 +101,8 @@ export const onProductsUpdate = (householdId: string, callback: (products: Produ
   return unsubscribe; // Retornamos la función para desuscribirse
 };
 
-export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock?: number): Promise<Product> => {
-  const newProductData: Partial<Product> = {
+export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number): Promise<Product> => {
+  const newProductData: Omit<Product, 'id'> = {
     name,
     category,
     quantity,
@@ -112,9 +112,13 @@ export const addProduct = async (householdId: string, name: string, category: st
     minimumStock,
   };
 
-  // Firestore omite las claves con valor 'undefined'
-  const docRef = await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).add(newProductData);
-  return { id: docRef.id, ...newProductData } as Product;
+  try {
+    const docRef = await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).add(newProductData);
+    return { id: docRef.id, ...newProductData, note: note || '' };
+  } catch (error) {
+    console.error("Error adding product to Firestore:", error);
+    throw error; // Re-throw the error so the UI can catch it
+  }
 };
 
 export const updateProduct = async (householdId:string, productId: string, data: Partial<Omit<Product, 'id'>>) => {
