@@ -7,9 +7,7 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-// Fix for error on line 13: `ReactDOM.render` is deprecated in React 18.
-// It has been replaced with the `createRoot` API, which is the current standard.
-// The import for ReactDOM was also updated from 'react-dom' to 'react-dom/client'.
+// Fix: Updated to React 18's createRoot API, which replaces the deprecated ReactDOM.render.
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
