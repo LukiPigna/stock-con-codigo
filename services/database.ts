@@ -85,10 +85,13 @@ export const updateHousehold = async (householdId: string, data: Partial<Omit<Ho
 export const onProductsUpdate = (householdId: string, callback: (products: Product[]) => void): (() => void) => {
   const unsubscribe = db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION)
     .onSnapshot((snapshot: any) => {
-      const products = snapshot.docs.map((doc: any) => ({
+      const products = snapshot.docs.map((doc: any) => {
+        const data = doc.data();
+        return {
         id: doc.id,
-        ...doc.data(),
-      })) as Product[];
+        ...data,
+        onShoppingList: data.onShoppingList || false,
+      }}) as Product[];
       callback(products);
     }, (error: any) => {
       console.error("Error en la suscripción de productos:", error);
@@ -104,18 +107,17 @@ export const addProduct = async (householdId: string, name: string, category: st
     quantity: quantity,
     unit,
     note,
+    onShoppingList: false,
   };
   const docRef = await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).add(newProductData);
   return { id: docRef.id, ...newProductData };
 };
 
-export const updateProductQuantity = async (householdId:string, productId: string, newQuantity: number) => {
+export const updateProduct = async (householdId:string, productId: string, data: Partial<Omit<Product, 'id'>>) => {
     try {
-        await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).doc(productId).update({
-            quantity: newQuantity
-        });
+        await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).doc(productId).update(data);
     } catch (error) {
-        console.error("Error updating product quantity:", error);
+        console.error("Error updating product:", error);
     }
 };
 

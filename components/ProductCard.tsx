@@ -4,8 +4,8 @@ import { Product, ProductUnit } from '../types';
 interface ProductCardProps {
   product: Product;
   onQuantityChange: (productId: string, newQuantity: number) => void;
-  onDelete: (productId: string) => void;
-  showDeleteButton: boolean;
+  onAddToShoppingList: (productId: string) => void;
+  onRemoveFromShoppingList: (productId: string) => void;
 }
 
 export const categoryColorPalette = [
@@ -31,7 +31,7 @@ export const getCategoryStyle = (categoryName: string) => {
 };
 
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, onDelete, showDeleteButton }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, onAddToShoppingList, onRemoveFromShoppingList }) => {
   const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const newQuantity = value === '' ? 0 : parseFloat(value);
@@ -61,17 +61,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
 
   return (
     <div className={`bg-white rounded-xl shadow-lg p-4 flex flex-col justify-between transition-all duration-300 border-2 ${cardStyle} relative`}>
-      {showDeleteButton && (
-        <button
-          onClick={() => onDelete(product.id)}
-          className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors z-20"
-          aria-label={`Eliminar ${product.name}`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      )}
       <div>
         <div className="flex justify-between items-start mb-1">
             <h2 className="text-lg font-bold text-gray-800 break-words w-4/5">{product.name}</h2>
@@ -88,9 +77,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
         <button
           onClick={handleDecrement}
           disabled={isOutOfStock}
-          className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-red-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-red-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 disabled:bg-gray-300 disabled:cursor-not-allowed pb-0.5"
         >
-          -
+          −
         </button>
         <div className="flex items-baseline justify-center text-center">
              <input
@@ -106,11 +95,34 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
         </div>
         <button
           onClick={handleIncrement}
-          className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-green-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90"
+          className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-green-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 pb-0.5"
         >
           +
         </button>
       </div>
+       {!isOutOfStock && (
+         product.onShoppingList ? (
+            <button
+                onClick={() => onRemoveFromShoppingList(product.id)}
+                className="mt-3 w-full flex items-center justify-center px-3 py-2 bg-orange-100 text-orange-800 rounded-md hover:bg-orange-200 font-semibold transition-colors text-sm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Sacar de la lista
+            </button>
+         ) : (
+            <button
+                onClick={() => onAddToShoppingList(product.id)}
+                className="mt-3 w-full flex items-center justify-center px-3 py-2 bg-slate-200 text-slate-700 rounded-md hover:bg-slate-300 font-semibold transition-colors text-sm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Anotar para comprar
+            </button>
+         )
+      )}
     </div>
   );
 };

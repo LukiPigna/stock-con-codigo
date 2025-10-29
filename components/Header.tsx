@@ -47,10 +47,10 @@ const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, householdNam
             Todos los Productos
           </button>
           <button
-            onClick={() => setActiveView(View.Missing)}
-            className={`w-1/2 py-2 px-4 rounded-md font-semibold transition-colors duration-300 ${getTabClass(View.Missing)}`}
+            onClick={() => setActiveView(View.Shopping)}
+            className={`w-1/2 py-2 px-4 rounded-md font-semibold transition-colors duration-300 ${getTabClass(View.Shopping)}`}
           >
-            Faltantes
+            Comprar
           </button>
         </div>
       </div>

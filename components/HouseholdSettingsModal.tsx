@@ -43,8 +43,8 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ househo
 
     const handleSaveChanges = () => {
         const cleanedCategories = categories.map(c => c.trim()).filter(c => c !== '');
-        // Fix: Use spread syntax to ensure correct type inference for uniqueCategories.
-        const uniqueCategories = [...new Set(cleanedCategories)];
+        // Fix: Explicitly provide the type to `new Set<string>()` to ensure `uniqueCategories` is correctly inferred as `string[]` instead of `unknown[]`.
+        const uniqueCategories = Array.from(new Set<string>(cleanedCategories));
         DB.updateHousehold(household.id, { categories: uniqueCategories });
         onClose();
     };

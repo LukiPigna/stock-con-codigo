@@ -11,11 +11,12 @@ export interface Product {
   category: string;
   unit: ProductUnit;
   note?: string;
+  onShoppingList: boolean;
 }
 
 export enum View {
   All = 'All',
-  Missing = 'Missing',
+  Shopping = 'Shopping',
 }
 
 export interface Household {
