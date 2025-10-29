@@ -72,15 +72,16 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
 
       <main className="container mx-auto p-4">
         {displayedProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 -m-2">
             {displayedProducts.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onQuantityChange={handleQuantityChange}
-                onDelete={handleDeleteProduct}
-                showDeleteButton={activeView === View.Missing}
-              />
+              <div key={product.id} className="p-2">
+                <ProductCard
+                  product={product}
+                  onQuantityChange={handleQuantityChange}
+                  onDelete={handleDeleteProduct}
+                  showDeleteButton={activeView === View.Missing}
+                />
+              </div>
             ))}
           </div>
         ) : (

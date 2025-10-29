@@ -53,39 +53,41 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose }) => 
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 -m-1">
               {categoryOptions.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategory(cat)}
-                  className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
-                    category === cat
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {cat}
-                </button>
+                <div key={cat} className="p-1">
+                  <button
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={`w-full px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
+                      category === cat
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                </div>
               ))}
             </div>
           </div>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Unidad</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 -m-1">
               {unitOptions.map((u) => (
-                <button
-                  key={u}
-                  type="button"
-                  onClick={() => setUnit(u)}
-                  className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
-                    unit === u
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {u}
-                </button>
+                <div key={u} className="p-1">
+                  <button
+                    type="button"
+                    onClick={() => setUnit(u)}
+                    className={`w-full px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
+                      unit === u
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {u}
+                  </button>
+                </div>
               ))}
             </div>
           </div>
