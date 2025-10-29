@@ -96,7 +96,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onCreateHousehold }) => 
   };
 
   const PinDisplay = () => (
-    <div className="flex justify-center items-center gap-4 mb-8">
+    <div className="flex justify-center items-center space-x-4 mb-8">
       {[...Array(4)].map((_, i) => (
         <div
           key={i}

@@ -11,10 +11,39 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ househo
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(household.pin).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(household.pin).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            });
+        } else {
+            // Fallback for older browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = household.pin;
+            textArea.style.position = "fixed";  // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.width = "2em";
+            textArea.style.height = "2em";
+            textArea.style.padding = "0";
+            textArea.style.border = "none";
+            textArea.style.outline = "none";
+            textArea.style.boxShadow = "none";
+            textArea.style.background = "transparent";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(textArea);
+        }
     }
 
   return (
@@ -31,7 +60,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ househo
         
         <div className="mb-6 bg-slate-50 p-4 rounded-lg">
             <label className="block text-sm font-medium text-gray-700 mb-2">PIN para entrar a esta casa</label>
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center space-x-2">
                 <input 
                     type="text" 
                     readOnly 

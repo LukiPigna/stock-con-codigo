@@ -66,7 +66,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
         )}
         {isOutOfStock && <p className="text-red-500 text-sm font-semibold mt-1">Sin stock</p>}
       </div>
-      <div className="flex items-center justify-center mt-4 gap-2">
+      <div className="flex items-center justify-center mt-4 space-x-2">
         <button
           onClick={handleDecrement}
           disabled={isOutOfStock}

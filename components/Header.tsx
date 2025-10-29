@@ -20,13 +20,13 @@ const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, householdNam
     <header className="bg-white shadow-md sticky top-0 z-10">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <h1 className="text-xl font-bold text-gray-800">{householdName}</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center space-x-3">
             <button onClick={onShowSettings} className="p-2 rounded-full hover:bg-gray-200 transition-colors" aria-label="Configuración de la casa">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-1.78-4.125a4 4 0 00-6.44 0A6 6 0 003 20v1h12z" />
