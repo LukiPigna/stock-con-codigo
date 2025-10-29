@@ -11,6 +11,12 @@ const PRODUCTS_SUBCOLLECTION = 'products';
 
 // --- Inicialización ---
 export const initDB = () => {
+  if (firebaseConfig.apiKey === "TU_API_KEY" || firebaseConfig.projectId === "TU_PROJECT_ID") {
+    const errorMsg = "Configuración de Firebase incompleta. Por favor, edita el archivo 'services/firebaseConfig.ts' con las credenciales de tu proyecto.";
+    alert(errorMsg);
+    throw new Error(errorMsg);
+  }
+
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }

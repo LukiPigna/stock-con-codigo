@@ -11,7 +11,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Inicializa la conexión con la base de datos una sola vez
-    DB.initDB();
+    try {
+      DB.initDB();
+    } catch (error) {
+      // Si initDB falla (p. ej., por config), no hacemos nada más.
+      // El usuario se quedará en la pantalla de login con una alerta ya mostrada.
+      console.error(error);
+      return;
+    }
   }, []);
 
   const handleLogin = async (pin: string): Promise<boolean> => {
@@ -24,11 +31,18 @@ const App: React.FC = () => {
     return false;
   };
 
-  const handleCreateHousehold = async (name: string) => {
-    const newHousehold = await DB.createHousehold(name);
-    setHousehold(newHousehold);
-    setIsNewHousehold(true);
-    setAppState('pantry');
+  const handleCreateHousehold = async (name: string): Promise<boolean> => {
+    try {
+      const newHousehold = await DB.createHousehold(name);
+      setHousehold(newHousehold);
+      setIsNewHousehold(true);
+      setAppState('pantry');
+      return true;
+    } catch (error) {
+      console.error("Error al crear la casa:", error);
+      alert("No se pudo crear la casa. Verifica que tu configuración de Firebase sea correcta y que tus reglas de Firestore permitan la escritura.");
+      return false;
+    }
   };
 
   const handleLogout = () => {

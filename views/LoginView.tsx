@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 interface LoginViewProps {
   onLogin: (pin: string) => Promise<boolean>;
-  onCreateHousehold: (name: string) => Promise<void>;
+  onCreateHousehold: (name: string) => Promise<boolean>;
 }
 
-const CreateHouseholdModal: React.FC<{onClose: () => void, onCreate: (name: string) => Promise<void>}> = ({ onClose, onCreate }) => {
+const CreateHouseholdModal: React.FC<{onClose: () => void, onCreate: (name: string) => Promise<boolean>}> = ({ onClose, onCreate }) => {
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -13,8 +13,11 @@ const CreateHouseholdModal: React.FC<{onClose: () => void, onCreate: (name: stri
     e.preventDefault();
     if(name.trim() && !isLoading) {
       setIsLoading(true);
-      await onCreate(name.trim());
-      // No es necesario cerrar el modal, App.tsx cambiará de vista
+      const success = await onCreate(name.trim());
+      if (!success) {
+        setIsLoading(false); // Re-activa el botón si la creación falló
+      }
+      // Si tiene éxito, App.tsx cambiará de vista y desmontará este modal
     }
   }
 
