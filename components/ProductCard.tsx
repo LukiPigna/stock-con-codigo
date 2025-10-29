@@ -53,7 +53,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
   };
 
   const handleIncrement = () => {
-    onQuantityChange(product.id, product.quantity + 1);
+    const newQuantity = product.quantity + 1;
+    // If incrementing a product counted in units, ensure the result is a whole number.
+    // This prevents getting `1.5` when incrementing from `0.5` (from the slider).
+    if (product.unit === ProductUnit.Units) {
+        onQuantityChange(product.id, Math.ceil(newQuantity));
+    } else {
+        onQuantityChange(product.id, newQuantity); // Allow decimals for gr/kg
+    }
   };
 
   const isOutOfStock = product.quantity === 0;
@@ -95,7 +102,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
                 <div className="flex-grow flex items-center justify-center mx-1">
                     <input
                         type="range"
-                        min="0.01"
+                        min="0"
                         max="1"
                         step="0.01"
                         value={product.quantity}

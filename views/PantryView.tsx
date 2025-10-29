@@ -166,21 +166,31 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
   };
 
   const displayedProducts = useMemo(() => {
-    const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name));
+    let processedList = [...products];
     
-    let filteredList: Product[];
-
+    // 1. Filter based on view (Shopping list or All)
     if (activeView === View.Shopping) {
-      filteredList = sortedProducts.filter(p => p.onShoppingList);
-    } else {
-      filteredList = sortedProducts;
+      processedList = processedList.filter(p => p.onShoppingList);
     }
 
-    if (categoryFilter === 'All') {
-        return filteredList;
+    // 2. Filter based on category
+    if (categoryFilter !== 'All') {
+      processedList = processedList.filter(p => p.category === categoryFilter);
     }
 
-    return filteredList.filter(p => p.category === categoryFilter);
+    // 3. Sort the filtered list
+    processedList.sort((a, b) => {
+      // Only apply special sorting for the "All Products" view
+      if (activeView === View.All) {
+        // If one is in stock and the other is not, the one in stock comes first.
+        if (a.quantity > 0 && b.quantity === 0) return -1;
+        if (a.quantity === 0 && b.quantity > 0) return 1;
+      }
+      // For all other cases (both in stock, both out of stock, or shopping view), sort by name.
+      return a.name.localeCompare(b.name);
+    });
+
+    return processedList;
 
   }, [products, activeView, categoryFilter]);
 
