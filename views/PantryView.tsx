@@ -20,7 +20,13 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    setProducts(DB.getProducts(household.id));
+    // Suscribirse a actualizaciones en tiempo real
+    const unsubscribe = DB.onProductsUpdate(household.id, (updatedProducts) => {
+      setProducts(updatedProducts);
+    });
+
+    // Limpiar la suscripción al desmontar el componente
+    return () => unsubscribe();
   }, [household.id]);
   
   useEffect(() => {
@@ -32,19 +38,17 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     DB.updateProductQuantity(household.id, productId, newQuantity);
-    setProducts(DB.getProducts(household.id));
+    // No es necesario llamar a setProducts, Firestore se encarga
   };
 
   const handleAddProduct = (name: string, category: ProductCategory, unit: ProductUnit, note: string) => {
     DB.addProduct(household.id, name, category, unit, note);
-    setProducts(DB.getProducts(household.id));
     setIsAdding(false);
   };
 
   const handleDeleteProduct = (productId: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este producto permanentemente?')) {
       DB.deleteProduct(household.id, productId);
-      setProducts(DB.getProducts(household.id));
     }
   };
 

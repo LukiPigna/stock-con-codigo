@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
 interface LoginViewProps {
-  onLogin: (pin: string) => boolean;
-  onCreateHousehold: (name: string) => void;
+  onLogin: (pin: string) => Promise<boolean>;
+  onCreateHousehold: (name: string) => Promise<void>;
 }
 
-const CreateHouseholdModal: React.FC<{onClose: () => void, onCreate: (name: string) => void}> = ({ onClose, onCreate }) => {
+const CreateHouseholdModal: React.FC<{onClose: () => void, onCreate: (name: string) => Promise<void>}> = ({ onClose, onCreate }) => {
   const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(name.trim()) {
-      onCreate(name.trim());
+    if(name.trim() && !isLoading) {
+      setIsLoading(true);
+      await onCreate(name.trim());
+      // No es necesario cerrar el modal, App.tsx cambiará de vista
     }
   }
 
@@ -32,11 +35,14 @@ const CreateHouseholdModal: React.FC<{onClose: () => void, onCreate: (name: stri
               placeholder="Ej: Casa del Centro"
               autoFocus
               required
+              disabled={isLoading}
             />
           </div>
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-semibold">Cancelar</button>
-            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold">Crear</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-semibold" disabled={isLoading}>Cancelar</button>
+            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold" disabled={isLoading}>
+              {isLoading ? 'Creando...' : 'Crear'}
+            </button>
           </div>
         </form>
       </div>
@@ -48,33 +54,42 @@ const CreateHouseholdModal: React.FC<{onClose: () => void, onCreate: (name: stri
 const LoginView: React.FC<LoginViewProps> = ({ onLogin, onCreateHousehold }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
-    if (pin.length === 4) {
-      const success = onLogin(pin);
-      if (!success) {
-        setError('PIN incorrecto');
-        if (navigator.vibrate) {
-          navigator.vibrate(200);
+    const attemptLogin = async () => {
+        if (pin.length === 4) {
+          setIsLoading(true);
+          const success = await onLogin(pin);
+          if (!success) {
+            setError('PIN incorrecto');
+            if (navigator.vibrate) {
+              navigator.vibrate(200);
+            }
+            setTimeout(() => {
+              setPin('');
+              setError('');
+              setIsLoading(false);
+            }, 800);
+          }
+          // Si tiene éxito, App.tsx se encargará de cambiar la vista
         }
-        setTimeout(() => {
-          setPin('');
-          setError('');
-        }, 800);
-      }
-    }
+    };
+    attemptLogin();
   }, [pin, onLogin]);
 
   const handleKeyPress = (key: string) => {
-    if (pin.length < 4) {
+    if (pin.length < 4 && !isLoading) {
       setError('');
       setPin(pin + key);
     }
   };
 
   const handleBackspace = () => {
-    setPin(pin.slice(0, -1));
+    if (!isLoading) {
+      setPin(pin.slice(0, -1));
+    }
   };
 
   const PinDisplay = () => (
@@ -84,6 +99,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onCreateHousehold }) => 
           key={i}
           className={`w-8 h-8 rounded-full transition-all duration-200 ${
             error ? 'bg-red-500' : 
+            isLoading ? 'bg-yellow-400 animate-pulse' :
             pin.length > i ? 'bg-indigo-600' : 'bg-gray-300'
           }`}
         />
@@ -92,7 +108,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onCreateHousehold }) => 
   );
 
   const NumpadButton: React.FC<{ value: string, onClick: (v: string) => void, children?: React.ReactNode, className?: string }> = ({ value, onClick, children, className }) => (
-    <button onClick={() => onClick(value)} className={`w-20 h-20 bg-white/50 rounded-full text-3xl font-light text-gray-800 flex items-center justify-center transition-transform active:scale-90 ${className}`}>
+    <button onClick={() => onClick(value)} className={`w-20 h-20 bg-white/50 rounded-full text-3xl font-light text-gray-800 flex items-center justify-center transition-transform active:scale-90 disabled:opacity-50`} disabled={isLoading}>
       {children || value}
     </button>
   );
@@ -129,7 +145,8 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onCreateHousehold }) => 
        <div className="mt-12 text-center">
         <button 
           onClick={() => setShowCreateModal(true)} 
-          className="text-indigo-600 hover:text-indigo-800 font-semibold"
+          className="text-indigo-600 hover:text-indigo-800 font-semibold disabled:opacity-50"
+          disabled={isLoading}
         >
           Crear nueva casa
         </button>

@@ -1,141 +1,100 @@
 import { Household, Product, ProductCategory, ProductUnit } from '../types';
+import { firebaseConfig } from './firebaseConfig';
 
-interface PantryData {
-  households: Household[];
-  products: Record<string, Product[]>; // Household ID -> Product[]
-  currentHousehold: string | null; // Household ID
-}
+// Declarar firebase para que TypeScript lo reconozca
+declare const firebase: any;
 
-const DB_KEY = 'pantryAppDB';
+let db: any; // Instancia de Firestore
 
-let db: PantryData = {
-  households: [],
-  products: {},
-  currentHousehold: null,
-};
+const HOUSEHOLDS_COLLECTION = 'households';
+const PRODUCTS_SUBCOLLECTION = 'products';
 
-const saveDB = () => {
-  try {
-    localStorage.setItem(DB_KEY, JSON.stringify(db));
-  } catch (error) {
-    console.error("Error saving to database", error);
-  }
-};
-
-const loadDB = () => {
-  try {
-    const data = localStorage.getItem(DB_KEY);
-    if (data) {
-       const parsedData = JSON.parse(data);
-       // Breaking change: Reset DB if it's the old user-based format
-       if (parsedData.users || parsedData.currentUser) {
-           console.warn("Old database structure detected. Resetting for new PIN system.");
-           db = { households: [], products: {}, currentHousehold: null };
-           saveDB();
-       } else {
-           db = parsedData;
-       }
-    }
-  } catch (error) {
-    console.error("Error loading from database", error);
-    db = { households: [], products: {}, currentHousehold: null };
-  }
-};
-
-const generatePin = (): string => {
-  let pin: string;
-  do {
-    pin = Math.floor(1000 + Math.random() * 9000).toString();
-  } while (db.households.some(h => h.pin === pin)); // Ensure PIN is unique
-  return pin;
-}
-
+// --- Inicialización ---
 export const initDB = () => {
-  loadDB();
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  db = firebase.firestore();
 };
+
+const generatePin = async (): Promise<string> => {
+  let pin: string;
+  let isUnique = false;
+  while (!isUnique) {
+    pin = Math.floor(1000 + Math.random() * 9000).toString();
+    const q = await db.collection(HOUSEHOLDS_COLLECTION).where('pin', '==', pin).get();
+    if (q.empty) {
+      isUnique = true;
+    }
+  }
+  return pin!;
+}
+
 
 // --- Household Management ---
-export const loginWithPin = (pin: string): Household | null => {
-  const household = db.households.find(h => h.pin === pin);
-  if (household) {
-    db.currentHousehold = household.id;
-    saveDB();
-    return household;
+export const loginWithPin = async (pin: string): Promise<Household | null> => {
+  const querySnapshot = await db.collection(HOUSEHOLDS_COLLECTION).where('pin', '==', pin).limit(1).get();
+  if (querySnapshot.empty) {
+    return null;
   }
-  return null;
-};
-
-export const logout = () => {
-  db.currentHousehold = null;
-  saveDB();
-};
-
-export const createHousehold = (name: string): Household => {
-  const newHousehold: Household = {
-    id: `house_${Date.now()}`,
-    name,
-    pin: generatePin(),
-  };
-  db.households.push(newHousehold);
-  db.products[newHousehold.id] = [];
-  saveDB();
-  return newHousehold;
-};
-
-export const setCurrentHousehold = (householdId: string) => {
-  db.currentHousehold = householdId;
-  saveDB();
-};
-
-export const getCurrentHousehold = (): Household | null => {
-  if (!db.currentHousehold) return null;
-  const household = db.households.find(h => h.id === db.currentHousehold);
-  if (!household) {
-      // Data inconsistency, clear current household
-      db.currentHousehold = null;
-      saveDB();
-      return null;
-  }
+  const doc = querySnapshot.docs[0];
+  const household = { id: doc.id, ...doc.data() } as Household;
+  // Ya no guardamos la sesión en localStorage
   return household;
 };
 
-// --- Product Management ---
-export const getProducts = (householdId: string): Product[] => {
-  return db.products[householdId] || [];
+export const createHousehold = async (name: string): Promise<Household> => {
+  const newPin = await generatePin();
+  const newHouseholdData = {
+    name,
+    pin: newPin,
+  };
+  const docRef = await db.collection(HOUSEHOLDS_COLLECTION).add(newHouseholdData);
+  return { id: docRef.id, ...newHouseholdData };
 };
 
-export const addProduct = (householdId: string, name: string, category: ProductCategory, unit: ProductUnit, note: string): Product => {
-  const newProduct: Product = {
-    id: `prod_${Date.now()}`,
+// --- Product Management (Real-time) ---
+export const onProductsUpdate = (householdId: string, callback: (products: Product[]) => void): (() => void) => {
+  const unsubscribe = db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION)
+    .onSnapshot((snapshot: any) => {
+      const products = snapshot.docs.map((doc: any) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Product[];
+      callback(products);
+    }, (error: any) => {
+      console.error("Error en la suscripción de productos:", error);
+    });
+
+  return unsubscribe; // Retornamos la función para desuscribirse
+};
+
+export const addProduct = async (householdId: string, name: string, category: ProductCategory, unit: ProductUnit, note: string): Promise<Product> => {
+  const newProductData = {
     name,
     category,
     quantity: 1,
     unit,
     note,
   };
-  if (!db.products[householdId]) {
-    db.products[householdId] = [];
-  }
-  db.products[householdId].push(newProduct);
-  saveDB();
-  return newProduct;
+  const docRef = await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).add(newProductData);
+  return { id: docRef.id, ...newProductData };
 };
 
-export const updateProductQuantity = (householdId: string, productId: string, newQuantity: number) => {
-  const products = db.products[householdId];
-  if (products) {
-    const productIndex = products.findIndex(p => p.id === productId);
-    if (productIndex > -1) {
-      products[productIndex].quantity = newQuantity;
-      saveDB();
+export const updateProductQuantity = async (householdId:string, productId: string, newQuantity: number) => {
+    try {
+        await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).doc(productId).update({
+            quantity: newQuantity
+        });
+    } catch (error) {
+        console.error("Error updating product quantity:", error);
     }
-  }
 };
 
-export const deleteProduct = (householdId: string, productId: string) => {
-  const products = db.products[householdId];
-  if (products) {
-    db.products[householdId] = products.filter(p => p.id !== productId);
-    saveDB();
-  }
+export const deleteProduct = async (householdId: string, productId: string) => {
+    try {
+        await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).collection(PRODUCTS_SUBCOLLECTION).doc(productId).delete();
+    } catch (error) {
+        console.error("Error deleting product:", error);
+    }
 };
