@@ -18,6 +18,7 @@ export interface Product {
 export enum View {
   All = 'All',
   Shopping = 'Shopping',
+  SupermarketList = 'SupermarketList',
 }
 
 export interface Household {

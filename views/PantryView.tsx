@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import ProductCard, { getCategoryStyle } from '../components/ProductCard';
 import AddProductModal from '../components/AddProductModal';
 import HouseholdSettingsModal from '../components/HouseholdSettingsModal';
+import SupermarketListView from './SupermarketListView';
 
 interface PantryViewProps {
   household: Household;
@@ -201,6 +202,17 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
 
   }, [products, activeView, categoryFilter]);
 
+  if (activeView === View.SupermarketList) {
+    return (
+      <SupermarketListView
+        allProducts={products}
+        householdId={household.id}
+        onBack={() => setActiveView(View.Shopping)}
+        categories={householdData.categories || []}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen pb-28">
       <Header 
@@ -246,6 +258,20 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
                     })}
                 </div>
             </div>
+        )}
+
+        {activeView === View.Shopping && displayedProducts.length > 0 && (
+          <div className="px-4 mb-4">
+            <button
+              onClick={() => setActiveView(View.SupermarketList)}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              Lista completa para el super
+            </button>
+          </div>
         )}
 
         <div className="p-4">
