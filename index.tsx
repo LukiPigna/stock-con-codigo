@@ -7,7 +7,6 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-// FIX: The `ReactDOM.render` API is deprecated in React 18. Using `createRoot` instead.
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
