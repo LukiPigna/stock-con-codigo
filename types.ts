@@ -1,9 +1,3 @@
-export enum ProductCategory {
-  Essential = 'Esencial',
-  Luxury = 'Lujo',
-  Trifle = 'Boludez',
-}
-
 export enum ProductUnit {
   Units = 'un.',
   Grams = 'gr',
@@ -14,7 +8,7 @@ export interface Product {
   id: string;
   name: string;
   quantity: number;
-  category: ProductCategory;
+  category: string;
   unit: ProductUnit;
   note?: string;
 }
@@ -28,4 +22,5 @@ export interface Household {
   id: string;
   name: string;
   pin: string; // 4-digit PIN
+  categories: string[];
 }

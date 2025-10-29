@@ -1,25 +1,29 @@
 import React, { useState } from 'react';
-import { ProductCategory, ProductUnit } from '../types';
+import { ProductUnit } from '../types';
 
 interface AddProductModalProps {
-  onAdd: (name: string, category: ProductCategory, unit: ProductUnit, note: string) => void;
+  onAdd: (name: string, category: string, unit: ProductUnit, note: string, quantity: number) => void;
   onClose: () => void;
+  categories: string[];
 }
 
-const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose }) => {
+const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose, categories }) => {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<ProductCategory>(ProductCategory.Essential);
+  const [category, setCategory] = useState<string>(categories[0] || '');
   const [unit, setUnit] = useState<ProductUnit>(ProductUnit.Units);
   const [note, setNote] = useState('');
+  const [quantity, setQuantity] = useState('1');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      onAdd(name.trim(), category, unit, note.trim());
+    const numQuantity = parseFloat(quantity);
+    if (name.trim() && category && !isNaN(numQuantity) && numQuantity >= 0) {
+      onAdd(name.trim(), category, unit, note.trim(), numQuantity);
+    } else if (!category) {
+      alert('Por favor, crea una categoría en la configuración de la casa antes de añadir un producto.');
     }
   };
   
-  const categoryOptions = Object.values(ProductCategory);
   const unitOptions = Object.values(ProductUnit);
 
   return (
@@ -52,44 +56,62 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose }) => 
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-            <div className="grid grid-cols-3 -m-1">
-              {categoryOptions.map((cat) => (
-                <div key={cat} className="p-1">
-                  <button
-                    type="button"
-                    onClick={() => setCategory(cat)}
-                    className={`w-full px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
-                      category === cat
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {cat}
-                  </button>
+              <label htmlFor="productQuantity" className="block text-sm font-medium text-gray-700 mb-1">Cantidad y Unidad</label>
+              <div className="flex items-center space-x-2">
+                <input
+                    id="productQuantity"
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    className="flex-grow w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Ej: 1"
+                    step={unit === ProductUnit.Units ? "1" : "any"}
+                    min="0"
+                    required
+                />
+                <div className="flex rounded-md shadow-sm">
+                    {unitOptions.map((u, index) => (
+                        <button
+                            type="button"
+                            key={u}
+                            onClick={() => setUnit(u)}
+                            className={`px-3 py-2 text-sm font-semibold transition-colors duration-200 focus:z-10 focus:outline-none focus:ring-2 focus:ring-indigo-500
+                                ${unit === u ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
+                                ${index === 0 ? 'rounded-l-md' : ''}
+                                ${index === unitOptions.length - 1 ? 'rounded-r-md' : 'border-r-0'}
+                            `}
+                        >
+                            {u}
+                        </button>
+                    ))}
                 </div>
-              ))}
-            </div>
+              </div>
           </div>
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Unidad</label>
-            <div className="grid grid-cols-3 -m-1">
-              {unitOptions.map((u) => (
-                <div key={u} className="p-1">
-                  <button
-                    type="button"
-                    onClick={() => setUnit(u)}
-                    className={`w-full px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
-                      unit === u
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {u}
-                  </button>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+            {categories.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {categories.map((cat) => (
+                    <div key={cat}>
+                    <button
+                        type="button"
+                        onClick={() => setCategory(cat)}
+                        className={`w-full px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 truncate ${
+                        category === cat
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                    >
+                        {cat}
+                    </button>
+                    </div>
+                ))}
                 </div>
-              ))}
-            </div>
+            ) : (
+                <div className="text-center p-4 bg-gray-50 rounded-md">
+                    <p className="text-sm text-gray-600">No hay categorías. Ve a la configuración de la casa para crear la primera.</p>
+                </div>
+            )}
           </div>
           <div className="flex justify-end space-x-3">
             <button
@@ -101,7 +123,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose }) => 
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold disabled:bg-indigo-300"
+              disabled={!category}
             >
               Agregar
             </button>

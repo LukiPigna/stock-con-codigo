@@ -1,5 +1,5 @@
 import React from 'react';
-import { Product, ProductCategory, ProductUnit } from '../types';
+import { Product, ProductUnit } from '../types';
 
 interface ProductCardProps {
   product: Product;
@@ -8,11 +8,28 @@ interface ProductCardProps {
   showDeleteButton: boolean;
 }
 
-const categoryStyles: { [key in ProductCategory]: { bg: string; text: string } } = {
-  [ProductCategory.Essential]: { bg: 'bg-green-100', text: 'text-green-800' },
-  [ProductCategory.Luxury]: { bg: 'bg-purple-100', text: 'text-purple-800' },
-  [ProductCategory.Trifle]: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+export const categoryColorPalette = [
+    { bg: 'bg-blue-100', text: 'text-blue-800' },
+    { bg: 'bg-green-100', text: 'text-green-800' },
+    { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+    { bg: 'bg-purple-100', text: 'text-purple-800' },
+    { bg: 'bg-pink-100', text: 'text-pink-800' },
+    { bg: 'bg-red-100', text: 'text-red-800' },
+    { bg: 'bg-cyan-100', text: 'text-cyan-800' },
+    { bg: 'bg-gray-200', text: 'text-gray-800' },
+];
+
+export const getCategoryStyle = (categoryName: string) => {
+    if (!categoryName) return categoryColorPalette[categoryColorPalette.length - 1];
+    let hash = 0;
+    for (let i = 0; i < categoryName.length; i++) {
+        hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    hash = hash & hash; // Ensure 32-bit integer
+    const index = Math.abs(hash % categoryColorPalette.length);
+    return categoryColorPalette[index];
 };
+
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, onDelete, showDeleteButton }) => {
   const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +57,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
 
   const isOutOfStock = product.quantity === 0;
   const cardStyle = isOutOfStock ? 'opacity-60 border-red-300' : 'border-transparent';
+  const categoryStyle = getCategoryStyle(product.category);
 
   return (
     <div className={`bg-white rounded-xl shadow-lg p-4 flex flex-col justify-between transition-all duration-300 border-2 ${cardStyle} relative`}>
@@ -57,7 +75,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
       <div>
         <div className="flex justify-between items-start mb-1">
             <h2 className="text-lg font-bold text-gray-800 break-words w-4/5">{product.name}</h2>
-            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${categoryStyles[product.category].bg} ${categoryStyles[product.category].text}`}>
+            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${categoryStyle.bg} ${categoryStyle.text}`}>
                 {product.category}
             </span>
         </div>

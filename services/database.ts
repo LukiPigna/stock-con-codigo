@@ -1,4 +1,4 @@
-import { Household, Product, ProductCategory, ProductUnit } from '../types';
+import { Household, Product, ProductUnit } from '../types';
 import { firebaseConfig } from './firebaseConfig';
 
 // Declarar firebase para que TypeScript lo reconozca
@@ -45,7 +45,6 @@ export const loginWithPin = async (pin: string): Promise<Household | null> => {
   }
   const doc = querySnapshot.docs[0];
   const household = { id: doc.id, ...doc.data() } as Household;
-  // Ya no guardamos la sesión en localStorage
   return household;
 };
 
@@ -54,10 +53,33 @@ export const createHousehold = async (name: string): Promise<Household> => {
   const newHouseholdData = {
     name,
     pin: newPin,
+    categories: ['Esenciales', 'Boludez'],
   };
   const docRef = await db.collection(HOUSEHOLDS_COLLECTION).add(newHouseholdData);
   return { id: docRef.id, ...newHouseholdData };
 };
+
+export const onHouseholdUpdate = (householdId: string, callback: (household: Household) => void): (() => void) => {
+  const unsubscribe = db.collection(HOUSEHOLDS_COLLECTION).doc(householdId)
+    .onSnapshot((doc: any) => {
+      if (doc.exists) {
+        const household = { id: doc.id, ...doc.data() } as Household;
+        callback(household);
+      }
+    }, (error: any) => {
+      console.error("Error en la suscripción de la casa:", error);
+    });
+  return unsubscribe;
+};
+
+export const updateHousehold = async (householdId: string, data: Partial<Omit<Household, 'id'>>) => {
+    try {
+        await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).update(data);
+    } catch (error) {
+        console.error("Error updating household:", error);
+    }
+};
+
 
 // --- Product Management (Real-time) ---
 export const onProductsUpdate = (householdId: string, callback: (products: Product[]) => void): (() => void) => {
@@ -75,11 +97,11 @@ export const onProductsUpdate = (householdId: string, callback: (products: Produ
   return unsubscribe; // Retornamos la función para desuscribirse
 };
 
-export const addProduct = async (householdId: string, name: string, category: ProductCategory, unit: ProductUnit, note: string): Promise<Product> => {
+export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number): Promise<Product> => {
   const newProductData = {
     name,
     category,
-    quantity: 1,
+    quantity: quantity,
     unit,
     note,
   };
