@@ -1,4 +1,3 @@
-
 // --- CONFIGURACIÓN DE FIREBASE ---
 var firebaseConfig = {
     apiKey: "AIzaSyBiGOD4JTGeSCRV9coKn27M-f5bh_kR9sE",
