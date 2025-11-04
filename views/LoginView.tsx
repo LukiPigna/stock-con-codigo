@@ -50,8 +50,14 @@ const AuthView: React.FC = () => {
                 return 'La contraseña debe tener al menos 6 caracteres.';
             case 'auth/invalid-email':
                 return 'El formato del correo electrónico no es válido.';
+            case 'auth/operation-not-allowed':
+                return 'Este método de inicio de sesión no está habilitado. Revisa la configuración de Authentication en tu consola de Firebase.';
+            case 'auth/popup-closed-by-user':
+                return 'Cerraste la ventana de inicio de sesión de Google.';
+            case 'auth/popup-blocked-by-browser':
+                return 'El navegador bloqueó la ventana de inicio de sesión. Habilita las ventanas emergentes para este sitio.';
             default:
-                return 'Ocurrió un error. Por favor, intenta de nuevo.';
+                return `Ocurrió un error inesperado. Por favor, intenta de nuevo. (Código: ${code})`;
         }
     };
 
