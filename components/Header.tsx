@@ -1,15 +1,35 @@
 import React from 'react';
-import { View } from '../types';
+import { View, FirebaseUser } from '../types';
 
 interface HeaderProps {
   activeView: View;
   setActiveView: (view: View) => void;
   householdName: string;
+  user: FirebaseUser;
   onShowSettings: () => void;
   onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, householdName, onShowSettings, onLogout }) => {
+const UserAvatar: React.FC<{ user: FirebaseUser }> = ({ user }) => {
+    const getInitials = () => {
+        if (user.displayName) {
+            return user.displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        }
+        if (user.email) {
+            return user.email.substring(0, 2).toUpperCase();
+        }
+        return '??';
+    }
+
+    return (
+        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm">
+            {getInitials()}
+        </div>
+    );
+};
+
+
+const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, householdName, user, onShowSettings, onLogout }) => {
   const getTabClass = (view: View) => {
     return activeView === view
       ? 'bg-indigo-600 text-white'
@@ -32,6 +52,7 @@ const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, householdNam
                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-1.78-4.125a4 4 0 00-6.44 0A6 6 0 003 20v1h12z" />
                </svg>
             </button>
+            <UserAvatar user={user} />
             <button onClick={onLogout} className="p-2 rounded-full hover:bg-gray-200 transition-colors" aria-label="Cerrar sesión">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Product, View, ProductUnit, Household } from '../types';
+import { Product, View, ProductUnit, Household, FirebaseUser } from '../types';
 import * as DB from '../services/database';
 import Header from '../components/Header';
 import ProductCard, { getCategoryStyle } from '../components/ProductCard';
@@ -9,6 +9,7 @@ import SupermarketListView from './SupermarketListView';
 
 interface PantryViewProps {
   household: Household;
+  user: FirebaseUser;
   onLogout: () => void;
   isNew?: boolean;
   onAcknowledgeNew: () => void;
@@ -82,7 +83,7 @@ const MinimumStockModal: React.FC<{
 };
 
 
-const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onAcknowledgeNew }) => {
+const PantryView: React.FC<PantryViewProps> = ({ household, user, onLogout, isNew, onAcknowledgeNew }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [householdData, setHouseholdData] = useState<Household>(household);
   const [activeView, setActiveView] = useState<View>(View.All);
@@ -219,6 +220,7 @@ const PantryView: React.FC<PantryViewProps> = ({ household, onLogout, isNew, onA
         activeView={activeView} 
         setActiveView={setActiveView}
         householdName={householdData.name}
+        user={user}
         onShowSettings={() => setShowSettings(true)}
         onLogout={onLogout}
       />

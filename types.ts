@@ -24,6 +24,13 @@ export enum View {
 export interface Household {
   id: string;
   name: string;
-  pin: string; // 4-digit PIN
+  owner: string; // UID of the owner
+  members: string[]; // UIDs of all members, including owner
   categories: string[];
+}
+
+export interface FirebaseUser {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
 }

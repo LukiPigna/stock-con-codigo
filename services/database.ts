@@ -1,10 +1,11 @@
-import { Household, Product, ProductUnit } from '../types';
+import { Household, Product, ProductUnit, FirebaseUser } from '../types';
 import { firebaseConfig } from './firebaseConfig';
 
 // Declarar firebase para que TypeScript lo reconozca
 declare const firebase: any;
 
 let db: any; // Instancia de Firestore
+let auth: any; // Instancia de Auth
 
 const HOUSEHOLDS_COLLECTION = 'households';
 const PRODUCTS_SUBCOLLECTION = 'products';
@@ -21,43 +22,68 @@ export const initDB = () => {
     firebase.initializeApp(firebaseConfig);
   }
   db = firebase.firestore();
+  auth = firebase.auth();
 };
 
-const generatePin = async (): Promise<string> => {
-  let pin: string;
-  let isUnique = false;
-  while (!isUnique) {
-    pin = Math.floor(1000 + Math.random() * 9000).toString();
-    const q = await db.collection(HOUSEHOLDS_COLLECTION).where('pin', '==', pin).get();
-    if (q.empty) {
-      isUnique = true;
-    }
-  }
-  return pin!;
+
+// --- Auth Management ---
+export const onAuthStateChanged = (callback: (user: any) => void) => {
+    return auth.onAuthStateChanged(callback);
+};
+
+export const signInWithGoogle = async () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+};
+
+export const signUpWithEmail = async (name: string, email: string, pass: string) => {
+    const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+    await userCredential.user.updateProfile({ displayName: name });
+    return userCredential.user;
+};
+
+export const signInWithEmail = (email: string, pass: string) => {
+    return auth.signInWithEmailAndPassword(email, pass);
 }
+
+export const signOut = () => {
+    return auth.signOut();
+};
 
 
 // --- Household Management ---
-export const loginWithPin = async (pin: string): Promise<Household | null> => {
-  const querySnapshot = await db.collection(HOUSEHOLDS_COLLECTION).where('pin', '==', pin).limit(1).get();
-  if (querySnapshot.empty) {
-    return null;
-  }
-  const doc = querySnapshot.docs[0];
-  const household = { id: doc.id, ...doc.data() } as Household;
-  return household;
+export const getHouseholdForUser = async (userId: string): Promise<Household | null> => {
+    const querySnapshot = await db.collection(HOUSEHOLDS_COLLECTION)
+        .where('members', 'array-contains', userId)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.empty) {
+        return null;
+    }
+    const doc = querySnapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as Household;
 };
 
-export const createHousehold = async (name: string): Promise<Household> => {
-  const newPin = await generatePin();
+export const createHousehold = async (name: string, user: FirebaseUser): Promise<Household> => {
   const newHouseholdData = {
     name,
-    pin: newPin,
-    categories: ['Esenciales', 'Boludez'],
+    owner: user.uid,
+    members: [user.uid],
+    categories: ['Esenciales', 'Lácteos', 'Carnes', 'Frutas y Verduras', 'Limpieza', 'Otros'],
   };
   const docRef = await db.collection(HOUSEHOLDS_COLLECTION).add(newHouseholdData);
   return { id: docRef.id, ...newHouseholdData };
 };
+
+export const joinHousehold = async (householdId: string, userId: string) => {
+    const householdRef = db.collection(HOUSEHOLDS_COLLECTION).doc(householdId);
+    // Usar `arrayUnion` para agregar el miembro de forma segura y evitar duplicados
+    await householdRef.update({
+        members: firebase.firestore.FieldValue.arrayUnion(userId)
+    });
+};
+
 
 export const onHouseholdUpdate = (householdId: string, callback: (household: Household) => void): (() => void) => {
   const unsubscribe = db.collection(HOUSEHOLDS_COLLECTION).doc(householdId)

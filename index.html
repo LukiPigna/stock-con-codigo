@@ -32,10 +32,12 @@
 </head>
 <body class="bg-slate-100">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK - Moved before the app script to ensure it loads first -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>
