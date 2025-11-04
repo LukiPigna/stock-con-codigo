@@ -56,6 +56,8 @@ const AuthView: React.FC = () => {
                 return 'Cerraste la ventana de inicio de sesión de Google.';
             case 'auth/popup-blocked-by-browser':
                 return 'El navegador bloqueó la ventana de inicio de sesión. Habilita las ventanas emergentes para este sitio.';
+            case 'auth/configuration-not-found':
+                return 'Error de configuración. Para usar Google Sign-In, actívalo en tu Consola de Firebase > Authentication > Sign-in method.';
             default:
                 return `Ocurrió un error inesperado. Por favor, intenta de nuevo. (Código: ${code})`;
         }
