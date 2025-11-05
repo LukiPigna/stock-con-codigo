@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Household } from '../types';
 import * as DB from '../services/database';
 
@@ -8,7 +8,7 @@ interface HouseholdSettingsModalProps {
     onLogout: () => void;
 }
 
-const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ household, onClose, onLogout }) => {
+const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = memo(({ household, onClose, onLogout }) => {
     const [copied, setCopied] = useState(false);
     const [categories, setCategories] = useState(household.categories || []);
     const [newCategory, setNewCategory] = useState('');
@@ -130,6 +130,6 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ househo
       </div>
     </div>
   );
-};
+});
 
 export default HouseholdSettingsModal;

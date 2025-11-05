@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import * as DB from '../services/database';
 
-const AuthView: React.FC = () => {
-    const [isLoginView, setIsLoginView] = useState(true);
+interface AuthViewProps {
+    isLoginInitial: boolean;
+    onBackToLanding: () => void;
+}
+
+const AuthView: React.FC<AuthViewProps> = ({ isLoginInitial, onBackToLanding }) => {
+    const [isLoginView, setIsLoginView] = useState(isLoginInitial);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -32,12 +37,13 @@ const AuthView: React.FC = () => {
         setError('');
         try {
             await DB.signInWithGoogle();
-        } catch (err: any) {
+        } catch (err: any)
+        {
             setError(getFriendlyErrorMessage(err.code));
             setIsLoading(false);
         }
     };
-
+    
     const getFriendlyErrorMessage = (code: string) => {
         switch (code) {
             case 'auth/wrong-password':
@@ -64,11 +70,19 @@ const AuthView: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col justify-center items-center bg-slate-100 p-4">
+        <div className="min-h-screen flex flex-col justify-center items-center bg-slate-100 p-4 relative">
+             <button onClick={onBackToLanding} className="absolute top-4 left-4 flex items-center text-gray-600 hover:text-gray-900 font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Volver
+            </button>
             <div className="w-full max-w-sm">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">Control de Despensa</h1>
-                    <p className="text-lg text-gray-600 mt-2">{isLoginView ? 'Inicia sesión en tu cuenta' : 'Crea una cuenta nueva'}</p>
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-indigo-600 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                     </svg>
+                    <p className="text-xl text-gray-600 mt-4">{isLoginView ? 'Inicia sesión en tu cuenta' : 'Crea una cuenta nueva'}</p>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-xl p-6">

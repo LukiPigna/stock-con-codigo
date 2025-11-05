@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, FirebaseUser } from '../types';
 
 interface HeaderProps {
@@ -10,7 +10,7 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
-const UserAvatar: React.FC<{ user: FirebaseUser }> = ({ user }) => {
+const UserAvatar: React.FC<{ user: FirebaseUser }> = memo(({ user }) => {
     const getInitials = () => {
         if (user.displayName) {
             return user.displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -26,18 +26,26 @@ const UserAvatar: React.FC<{ user: FirebaseUser }> = ({ user }) => {
             {getInitials()}
         </div>
     );
-};
+});
 
 
-const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, householdName, user, onShowSettings, onLogout }) => {
+const Header: React.FC<HeaderProps> = memo(({ activeView, setActiveView, householdName, user, onShowSettings, onLogout }) => {
   const getTabClass = (view: View) => {
-    return activeView === view
-      ? 'bg-indigo-600 text-white'
-      : 'text-gray-600 hover:bg-indigo-100 hover:text-indigo-600';
+    const mainViews = [View.All, View.Summary, View.Shopping];
+    if (mainViews.includes(activeView) && mainViews.includes(view)) {
+         return activeView === view
+            ? 'bg-indigo-600 text-white'
+            : 'text-gray-600 hover:bg-indigo-100 hover:text-indigo-600';
+    }
+    // Handle case where activeView is SupermarketList but we want to highlight 'Shopping'
+    if (activeView === View.SupermarketList && view === View.Shopping) {
+        return 'bg-indigo-600 text-white';
+    }
+    return 'text-gray-600 hover:bg-indigo-100 hover:text-indigo-600';
   };
 
   return (
-    <header className="bg-white shadow-md">
+    <header className="bg-white shadow-md sticky top-0 z-30">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center space-x-2">
@@ -63,13 +71,19 @@ const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, householdNam
         <div className="flex justify-center bg-slate-200 p-1 rounded-lg">
           <button
             onClick={() => setActiveView(View.All)}
-            className={`w-1/2 py-2 px-4 rounded-md font-semibold transition-colors duration-300 ${getTabClass(View.All)}`}
+            className={`w-1/3 py-2 px-4 rounded-md font-semibold transition-colors duration-300 ${getTabClass(View.All)}`}
           >
-            Todos los Productos
+            Despensa
+          </button>
+           <button
+            onClick={() => setActiveView(View.Summary)}
+            className={`w-1/3 py-2 px-4 rounded-md font-semibold transition-colors duration-300 ${getTabClass(View.Summary)}`}
+          >
+            Resumen
           </button>
           <button
             onClick={() => setActiveView(View.Shopping)}
-            className={`w-1/2 py-2 px-4 rounded-md font-semibold transition-colors duration-300 ${getTabClass(View.Shopping)}`}
+            className={`w-1/3 py-2 px-4 rounded-md font-semibold transition-colors duration-300 ${getTabClass(View.Shopping)}`}
           >
             Comprar
           </button>
@@ -77,6 +91,6 @@ const Header: React.FC<HeaderProps> = ({ activeView, setActiveView, householdNam
       </div>
     </header>
   );
-};
+});
 
 export default Header;

@@ -13,10 +13,12 @@
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0/compat"
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0/compat",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.5.0/"
   }
 }
 </script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         /* Hide scrollbar for Chrome, Safari and Opera */
         .no-scrollbar::-webkit-scrollbar {
@@ -28,15 +30,41 @@
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }
+        
+        /* Animation for skeleton loading */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .animate-shimmer {
+            background: linear-gradient(to right, #f6f7f8 4%, #edeef1 25%, #f6f7f8 36%);
+            background-size: 2000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+
+        /* Fade-in animation for elements */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Scroll animation for landing page sections */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .scroll-animate.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body class="bg-slate-100">
     <div id="root"></div>
-
-    <!-- Firebase SDK - Moved before the app script to ensure it loads first -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     
     <script type="module" src="/index.tsx"></script>
 </body>

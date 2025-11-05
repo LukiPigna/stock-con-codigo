@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as DB from './services/database';
 import { Household, FirebaseUser } from './types';
 import AuthView from './views/LoginView';
 import PantryView from './views/PantryView';
 import WelcomeView from './views/WelcomeView';
+import LandingView from './views/LandingView';
+
+type AuthAction = 'landing' | 'login' | 'signup';
 
 const LoadingSpinner: React.FC = () => (
     <div className="min-h-screen flex justify-center items-center bg-slate-100">
@@ -22,6 +25,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [household, setHousehold] = useState<Household | null>(null);
   const [isNewHousehold, setIsNewHousehold] = useState(false);
+  const [authAction, setAuthAction] = useState<AuthAction>('landing');
 
   useEffect(() => {
     try {
@@ -52,6 +56,7 @@ const App: React.FC = () => {
 
         const userHousehold = await DB.getHouseholdForUser(appUser.uid);
         setHousehold(userHousehold);
+        setAuthAction('landing'); // Reset auth action on login
       } else {
         setUser(null);
         setHousehold(null);
@@ -62,16 +67,21 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleCreateHousehold = async (name: string): Promise<void> => {
+  const handleCreateHousehold = useCallback(async (name: string): Promise<void> => {
     if (!user) return;
     const newHousehold = await DB.createHousehold(name, user);
     setHousehold(newHousehold);
     setIsNewHousehold(true);
-  };
+  }, [user]);
   
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     DB.signOut();
-  };
+  }, []);
+
+  const onLogin = useCallback(() => setAuthAction('login'), []);
+  const onSignUp = useCallback(() => setAuthAction('signup'), []);
+  const onBackToLanding = useCallback(() => setAuthAction('landing'), []);
+  const onAcknowledgeNew = useCallback(() => setIsNewHousehold(false), []);
 
   const renderContent = () => {
     if (isLoading) {
@@ -79,7 +89,15 @@ const App: React.FC = () => {
     }
 
     if (!user) {
-      return <AuthView />;
+        switch (authAction) {
+            case 'login':
+                return <AuthView isLoginInitial={true} onBackToLanding={onBackToLanding} />;
+            case 'signup':
+                return <AuthView isLoginInitial={false} onBackToLanding={onBackToLanding} />;
+            case 'landing':
+            default:
+                return <LandingView onLogin={onLogin} onSignUp={onSignUp} />;
+        }
     }
 
     if (household) {
@@ -88,7 +106,7 @@ const App: React.FC = () => {
                 household={household}
                 onLogout={handleLogout}
                 isNew={isNewHousehold}
-                onAcknowledgeNew={() => setIsNewHousehold(false)}
+                onAcknowledgeNew={onAcknowledgeNew}
              />;
     }
 

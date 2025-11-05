@@ -1,15 +1,22 @@
-export enum ProductUnit {
-  Units = 'un.',
-  Grams = 'gr',
-  Kilograms = 'kg',
+// types.ts
+import { Timestamp } from 'firebase/firestore';
+
+export type ProductUnit = 'un.' | 'gr' | 'kg';
+export const ProductUnits: ProductUnit[] = ['un.', 'gr', 'kg'];
+
+export interface ProductBatch {
+  id: string;
+  quantity: number;
+  addedDate: Timestamp;
+  expirationDate: Timestamp | null;
 }
 
 export interface Product {
   id: string;
   name: string;
-  quantity: number;
   category: string;
   unit: ProductUnit;
+  quantity: number; // This will be the SUM of all batch quantities
   note?: string;
   onShoppingList: boolean;
   minimumStock?: number;
@@ -19,6 +26,7 @@ export enum View {
   All = 'All',
   Shopping = 'Shopping',
   SupermarketList = 'SupermarketList',
+  Summary = 'Summary',
 }
 
 export interface Household {
