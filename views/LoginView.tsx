@@ -1,140 +1,169 @@
-import React, { useState } from 'react';
-import * as DB from '../services/database';
+import React, { useState, useEffect } from 'react';
 
-interface AuthViewProps {
-    isLoginInitial: boolean;
-    onBackToLanding: () => void;
+interface LoginViewProps {
+  onLogin: (pin: string) => Promise<boolean>;
+  onCreateHousehold: (name: string) => Promise<boolean>;
 }
 
-const AuthView: React.FC<AuthViewProps> = ({ isLoginInitial, onBackToLanding }) => {
-    const [isLoginView, setIsLoginView] = useState(isLoginInitial);
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+const CreateHouseholdModal: React.FC<{onClose: () => void, onCreate: (name: string) => Promise<boolean>}> = ({ onClose, onCreate }) => {
+  const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-    const handleAuthAction = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(name.trim() && !isLoading) {
+      setIsLoading(true);
+      const success = await onCreate(name.trim());
+      if (!success) {
+        setIsLoading(false); // Re-activa el botón si la creación falló
+      }
+      // Si tiene éxito, App.tsx cambiará de vista y desmontará este modal
+    }
+  }
 
-        try {
-            if (isLoginView) {
-                await DB.signInWithEmail(email, password);
-            } else {
-                await DB.signUpWithEmail(name, email, password);
-            }
-        } catch (err: any) {
-            setError(getFriendlyErrorMessage(err.code));
-            setIsLoading(false);
-        }
-        // El listener en App.tsx se encargará de la redirección
-    };
-
-    const handleGoogleSignIn = async () => {
-        setIsLoading(true);
-        setError('');
-        try {
-            await DB.signInWithGoogle();
-        } catch (err: any)
-        {
-            setError(getFriendlyErrorMessage(err.code));
-            setIsLoading(false);
-        }
-    };
-    
-    const getFriendlyErrorMessage = (code: string) => {
-        switch (code) {
-            case 'auth/wrong-password':
-                return 'La contraseña es incorrecta.';
-            case 'auth/user-not-found':
-                return 'No se encontró ningún usuario con este correo electrónico.';
-            case 'auth/email-already-in-use':
-                return 'Este correo electrónico ya está registrado.';
-            case 'auth/weak-password':
-                return 'La contraseña debe tener al menos 6 caracteres.';
-            case 'auth/invalid-email':
-                return 'El formato del correo electrónico no es válido.';
-            case 'auth/operation-not-allowed':
-                return 'Este método de inicio de sesión no está habilitado. Revisa la configuración de Authentication en tu consola de Firebase.';
-            case 'auth/popup-closed-by-user':
-                return 'Cerraste la ventana de inicio de sesión de Google.';
-            case 'auth/popup-blocked-by-browser':
-                return 'El navegador bloqueó la ventana de inicio de sesión. Habilita las ventanas emergentes para este sitio.';
-            case 'auth/configuration-not-found':
-                return 'Error de configuración. Para usar Google Sign-In, actívalo en tu Consola de Firebase > Authentication > Sign-in method.';
-            default:
-                return `Ocurrió un error inesperado. Por favor, intenta de nuevo. (Código: ${code})`;
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex flex-col justify-center items-center bg-slate-100 p-4 relative">
-             <button onClick={onBackToLanding} className="absolute top-4 left-4 flex items-center text-gray-600 hover:text-gray-900 font-semibold">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                Volver
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-sm">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Crear Nueva Casa</h2>
+        <form onSubmit={handleSubmit}>
+           <p className="text-sm text-gray-600 mb-4">Dale un nombre a tu casa para empezar a gestionar la despensa en equipo.</p>
+          <div className="mb-4">
+            <label htmlFor="householdName" className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Casa</label>
+            <input
+              id="householdName"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Ej: Casa del Centro"
+              autoFocus
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div className="flex justify-end space-x-3">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-semibold" disabled={isLoading}>Cancelar</button>
+            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold" disabled={isLoading}>
+              {isLoading ? 'Creando...' : 'Crear'}
             </button>
-            <div className="w-full max-w-sm">
-                <div className="text-center mb-8">
-                     <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-indigo-600 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                     </svg>
-                    <p className="text-xl text-gray-600 mt-4">{isLoginView ? 'Inicia sesión en tu cuenta' : 'Crea una cuenta nueva'}</p>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-xl p-6">
-                    <form onSubmit={handleAuthAction}>
-                        {!isLoginView && (
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="name">Nombre</label>
-                                <input id="name" type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
-                            </div>
-                        )}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">Email</label>
-                            <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
-                        </div>
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">Contraseña</label>
-                            <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
-                        </div>
-
-                        {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
-
-                        <button type="submit" disabled={isLoading} className="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors">
-                            {isLoading ? 'Cargando...' : (isLoginView ? 'Iniciar Sesión' : 'Crear Cuenta')}
-                        </button>
-                    </form>
-                    
-                    <div className="mt-4 text-center text-sm">
-                        <button onClick={() => { setIsLoginView(!isLoginView); setError(''); }} className="font-medium text-indigo-600 hover:text-indigo-500">
-                            {isLoginView ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
-                        </button>
-                    </div>
-
-                    <div className="my-6 flex items-center">
-                        <div className="flex-grow border-t border-gray-300"></div>
-                        <span className="flex-shrink mx-4 text-gray-400 text-sm">O</span>
-                        <div className="flex-grow border-t border-gray-300"></div>
-                    </div>
-
-                    <button onClick={handleGoogleSignIn} disabled={isLoading} className="w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-gray-700 font-medium hover:bg-gray-50 flex items-center justify-center gap-2 disabled:bg-gray-100">
-                        <svg className="w-5 h-5" viewBox="0 0 48 48">
-                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                            <path fill="none" d="M0 0h48v48H0z"></path>
-                        </svg>
-                        <span>Continuar con Google</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
-export default AuthView;
+
+const LoginView: React.FC<LoginViewProps> = ({ onLogin, onCreateHousehold }) => {
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  useEffect(() => {
+    const attemptLogin = async () => {
+        if (pin.length === 4) {
+          setIsLoading(true);
+          const success = await onLogin(pin);
+          if (!success) {
+            setError('PIN incorrecto');
+            if (navigator.vibrate) {
+              navigator.vibrate(200);
+            }
+            setTimeout(() => {
+              setPin('');
+              setError('');
+              setIsLoading(false);
+            }, 800);
+          }
+          // Si tiene éxito, App.tsx se encargará de cambiar la vista
+        }
+    };
+    attemptLogin();
+  }, [pin, onLogin]);
+
+  const handleKeyPress = (key: string) => {
+    if (pin.length < 4 && !isLoading) {
+      setError('');
+      setPin(pin + key);
+    }
+  };
+
+  const handleBackspace = () => {
+    if (!isLoading) {
+      setPin(pin.slice(0, -1));
+    }
+  };
+
+  const PinDisplay = () => (
+    <div className="flex justify-center items-center space-x-4 mb-8">
+      {[...Array(4)].map((_, i) => (
+        <div
+          key={i}
+          className={`w-8 h-8 rounded-full transition-all duration-200 ${
+            error ? 'bg-red-500' : 
+            isLoading ? 'bg-yellow-400 animate-pulse' :
+            pin.length > i ? 'bg-indigo-600' : 'bg-gray-300'
+          }`}
+        />
+      ))}
+    </div>
+  );
+
+  const NumpadButton: React.FC<{ value: string, onClick: (v: string) => void, children?: React.ReactNode, className?: string }> = ({ value, onClick, children, className }) => (
+    <button onClick={() => onClick(value)} className={`w-20 h-20 bg-white/50 rounded-full text-3xl font-light text-gray-800 flex items-center justify-center transition-transform active:scale-90 disabled:opacity-50 ${className}`}>
+      {children || value}
+    </button>
+  );
+
+  return (
+    <div className="min-h-screen flex flex-col justify-center items-center bg-slate-100 p-4">
+      {showCreateModal && <CreateHouseholdModal onClose={() => setShowCreateModal(false)} onCreate={onCreateHousehold} />}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Control de Despensa</h1>
+        <p className="text-lg text-gray-600 mt-2">Ingresa el PIN de tu casa</p>
+      </div>
+
+      <div className="w-full max-w-xs flex flex-col items-center">
+        <PinDisplay />
+        <div className="flex flex-col items-center space-y-5">
+          <div className="flex space-x-5">
+            <NumpadButton value="1" onClick={handleKeyPress} />
+            <NumpadButton value="2" onClick={handleKeyPress} />
+            <NumpadButton value="3" onClick={handleKeyPress} />
+          </div>
+          <div className="flex space-x-5">
+            <NumpadButton value="4" onClick={handleKeyPress} />
+            <NumpadButton value="5" onClick={handleKeyPress} />
+            <NumpadButton value="6" onClick={handleKeyPress} />
+          </div>
+          <div className="flex space-x-5">
+            <NumpadButton value="7" onClick={handleKeyPress} />
+            <NumpadButton value="8" onClick={handleKeyPress} />
+            <NumpadButton value="9" onClick={handleKeyPress} />
+          </div>
+          <div className="flex space-x-5">
+            <div className="w-20 h-20" />
+            <NumpadButton value="0" onClick={handleKeyPress} />
+            <NumpadButton value="backspace" onClick={handleBackspace} className="text-2xl">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 002.828 0L21 12M3 12l6.414-6.414a2 2 0 012.828 0L21 12" />
+              </svg>
+            </NumpadButton>
+          </div>
+        </div>
+      </div>
+       <div className="mt-12 text-center">
+        <button 
+          onClick={() => setShowCreateModal(true)} 
+          className="text-indigo-600 hover:text-indigo-800 font-semibold disabled:opacity-50"
+          disabled={isLoading}
+        >
+          Crear nueva casa
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default LoginView;

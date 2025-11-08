@@ -1,22 +1,21 @@
-import React, { useState, memo } from 'react';
+import React, { useState } from 'react';
 import { Household } from '../types';
 import * as DB from '../services/database';
 
+// Fix: Define props interface for type safety.
 interface HouseholdSettingsModalProps {
     household: Household;
     onClose: () => void;
     onLogout: () => void;
 }
 
-const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = memo(({ household, onClose, onLogout }) => {
+const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = ({ household, onClose, onLogout }) => {
     const [copied, setCopied] = useState(false);
     const [categories, setCategories] = useState(household.categories || []);
     const [newCategory, setNewCategory] = useState('');
 
-    const inviteLink = `${window.location.origin}?join=${household.id}`;
-
     const handleCopy = () => {
-        navigator.clipboard.writeText(inviteLink).then(() => {
+        navigator.clipboard.writeText(household.pin).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         });
@@ -44,10 +43,12 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = memo(({ ho
 
     const handleSaveChanges = () => {
         const cleanedCategories = categories.map(c => c.trim()).filter(c => c !== '');
+        // Fix: Explicitly provide the type to `new Set<string>()` to ensure `uniqueCategories` is correctly inferred as `string[]` instead of `unknown[]`.
         const uniqueCategories = Array.from(new Set<string>(cleanedCategories));
         DB.updateHousehold(household.id, { categories: uniqueCategories });
         onClose();
     };
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
@@ -62,22 +63,22 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = memo(({ ho
         </div>
         
         <div className="mb-6 bg-slate-50 p-4 rounded-lg text-center">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Enlace de invitación</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">PIN para entrar a esta casa</label>
             <div className="flex items-center justify-center space-x-2">
                 <input 
                     type="text" 
                     readOnly 
-                    value={inviteLink}
-                    className="w-full flex-grow px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm text-gray-600 truncate"
+                    value={household.pin}
+                    className="w-40 flex-grow px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm font-mono text-4xl tracking-widest text-center"
                 />
                 <button 
                     onClick={handleCopy}
-                    className={`px-4 py-2 rounded-md font-semibold text-white transition-colors w-28 ${copied ? 'bg-green-500' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                    className={`px-4 py-2 h-14 rounded-md font-semibold text-white transition-colors ${copied ? 'bg-green-500' : 'bg-indigo-600 hover:bg-indigo-700'}`}
                 >
                     {copied ? '¡Copiado!' : 'Copiar'}
                 </button>
             </div>
-             <p className="text-xs text-gray-500 mt-2">Comparte este enlace para invitar a miembros a tu casa.</p>
+             <p className="text-xs text-gray-500 mt-2">Comparte este PIN con tus compañeros de casa.</p>
         </div>
 
         <div className="border-t pt-4 text-left">
@@ -115,7 +116,7 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = memo(({ ho
         <div className="flex justify-between items-center mt-8">
             <button
               onClick={onLogout}
-              className="px-4 py-2 bg-red-100 text-red-800 rounded-md hover:bg-red-200 font-semibold"
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-semibold"
             >
               Salir de la casa
             </button>
@@ -130,6 +131,6 @@ const HouseholdSettingsModal: React.FC<HouseholdSettingsModalProps> = memo(({ ho
       </div>
     </div>
   );
-});
+};
 
 export default HouseholdSettingsModal;

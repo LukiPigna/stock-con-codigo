@@ -1,7 +1,5 @@
 {
   "name": "Control de Stock de Despensa",
   "description": "Una aplicación web sencilla para gestionar el stock de productos en tu heladera y alacena. Permite añadir productos, clasificarlos por categorías y ajustar las cantidades fácilmente. Ideal para usar en un iPad o cualquier dispositivo táctil.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "requestFramePermissions": []
 }
