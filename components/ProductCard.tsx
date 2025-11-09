@@ -6,6 +6,9 @@ interface ProductCardProps {
   onQuantityChange: (productId: string, newQuantity: number) => void;
   onAddToShoppingList: (productId: string) => void;
   onRemoveFromShoppingList: (productId: string) => void;
+  tourIdCard?: string;
+  tourIdControls?: string;
+  tourIdButton?: string;
 }
 
 export const categoryColorPalette = [
@@ -30,8 +33,17 @@ export const getCategoryStyle = (categoryName: string) => {
     return categoryColorPalette[index];
 };
 
+const getLocationIcon = (locationName?: string): string => {
+    if (!locationName) return '';
+    const lowerCaseName = locationName.toLowerCase();
+    if (lowerCaseName.includes('heladera') || lowerCaseName.includes('refrigerador')) return '❄️';
+    if (lowerCaseName.includes('freezer') || lowerCaseName.includes('congelador')) return '🧊';
+    if (lowerCaseName.includes('alacena') || lowerCaseName.includes('despensa')) return '🥫';
+    return '📍';
+};
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, onAddToShoppingList, onRemoveFromShoppingList }) => {
+
+const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, onAddToShoppingList, onRemoveFromShoppingList, tourIdCard, tourIdControls, tourIdButton }) => {
   const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const newQuantity = value === '' ? 0 : parseFloat(value);
@@ -82,14 +94,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
 
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg p-4 flex flex-col justify-between transition-all duration-300 border-2 ${cardStyle} relative`}>
+    <div 
+      className={`bg-white rounded-xl shadow-lg p-4 flex flex-col justify-between transition-all duration-300 border-2 ${cardStyle} relative`}
+      data-tour-id={tourIdCard}
+    >
       <div>
-        <div className="flex justify-between items-start mb-1">
+        <div className="flex justify-between items-start mb-2">
             <h2 className="text-lg font-bold text-gray-800 break-words w-4/5">{product.name}</h2>
             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${categoryStyle.bg} ${categoryStyle.text}`}>
                 {product.category}
             </span>
         </div>
+        {product.location && (
+            <div className="flex items-center space-x-1.5 mb-2">
+                <span className="text-sm">{getLocationIcon(product.location)}</span>
+                <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">{product.location}</span>
+            </div>
+        )}
          {product.note && (
             <p className="text-sm text-gray-500 italic break-words">{product.note}</p>
         )}
@@ -107,7 +128,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
                 )}
             </div>
         )}
-        <div className="flex items-center justify-center space-x-2 w-full">
+        <div 
+          className="flex items-center justify-center space-x-2 w-full"
+          data-tour-id={tourIdControls}
+        >
             <button
             onClick={handleDecrement}
             disabled={isOutOfStock}
@@ -125,7 +149,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
                         step={sliderProps.step}
                         value={product.quantity}
                         onChange={(e) => onQuantityChange(product.id, parseFloat(e.target.value))}
-                        className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                        className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#84A98C]"
                     />
                 </div>
             ) : (
@@ -135,7 +159,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
                         value={product.quantity}
                         onChange={handleQuantityInputChange}
                         onBlur={handleBlur}
-                        className="w-20 text-center bg-gray-50 rounded-md p-1 text-3xl font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-20 text-center bg-white rounded-md p-1 text-3xl font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#84A98C]"
                         step={product.unit === ProductUnit.Grams || product.unit === ProductUnit.Kilograms ? "0.1" : "1"}
                         min="0"
                     />
@@ -145,7 +169,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
 
             <button
             onClick={handleIncrement}
-            className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-green-500 text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 pb-0.5"
+            className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-[#84A98C] text-white rounded-full text-2xl font-bold transition-transform duration-150 active:scale-90 pb-0.5"
             >
             +
             </button>
@@ -166,6 +190,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
             <button
                 onClick={() => onAddToShoppingList(product.id)}
                 className="mt-3 w-full flex items-center justify-center px-3 py-2 bg-slate-200 text-slate-700 rounded-md hover:bg-slate-300 font-semibold transition-colors text-sm"
+                data-tour-id={tourIdButton}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />

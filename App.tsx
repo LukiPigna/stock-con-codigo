@@ -1,67 +1,91 @@
 import React, { useState, useEffect } from 'react';
 import * as DB from './services/database';
-import { Household } from './types';
+import { Household, User } from './types';
 import LoginView from './views/LoginView';
 import PantryView from './views/PantryView';
+import LandingView from './views/LandingView';
+import JoinOrCreateHouseholdView from './views/HouseholdView';
 
 const App: React.FC = () => {
-  const [appState, setAppState] = useState<'login' | 'pantry'>('login');
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const [household, setHousehold] = useState<Household | null>(null);
-  const [isNewHousehold, setIsNewHousehold] = useState(false);
+  const [initialView, setInitialView] = useState<'landing' | 'app'>('landing');
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   useEffect(() => {
-    // Inicializa la conexión con la base de datos una sola vez
     try {
       DB.initDB();
     } catch (error) {
-      // Si initDB falla (p. ej., por config), no hacemos nada más.
-      // El usuario se quedará en la pantalla de login con una alerta ya mostrada.
       console.error(error);
+      setIsLoading(false);
       return;
     }
+
+    const unsubscribe = DB.onAuthStateChanged(async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const householdId = currentUser.householdId;
+        if (householdId) {
+          const hhData = await DB.getHousehold(householdId);
+          setHousehold(hhData);
+        } else {
+          setHousehold(null);
+        }
+      } else {
+        setHousehold(null);
+      }
+      setIsLoading(false);
+    });
+    
+    // Check for invite link on load
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteId = urlParams.get('invite');
+    if (inviteId) {
+      localStorage.setItem('inviteId', inviteId);
+      setInitialView('app'); // Go directly to app if there's an invite
+    }
+
+    return () => unsubscribe();
   }, []);
 
-  const handleLogin = async (pin: string): Promise<boolean> => {
-    const loggedInHousehold = await DB.loginWithPin(pin);
-    if (loggedInHousehold) {
-      setHousehold(loggedInHousehold);
-      setAppState('pantry');
-      return true;
-    }
-    return false;
+  const handleNavigateToApp = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    setInitialView('app');
   };
 
-  const handleCreateHousehold = async (name: string): Promise<boolean> => {
-    try {
-      const newHousehold = await DB.createHousehold(name);
-      setHousehold(newHousehold);
-      setIsNewHousehold(true);
-      setAppState('pantry');
-      return true;
-    } catch (error) {
-      console.error("Error al crear la casa:", error);
-      alert("No se pudo crear la casa. Verifica que tu configuración de Firebase sea correcta y que tus reglas de Firestore permitan la escritura.");
-      return false;
-    }
-  };
-
-  const handleLogout = () => {
-    // Ya no es necesario llamar a DB.logout() porque no hay sesión que cerrar
+  const handleLogout = async () => {
+    await DB.signOut();
+    setUser(null);
     setHousehold(null);
-    setAppState('login');
   };
+  
+  const handleHouseholdCreated = (newHousehold: Household) => {
+      setHousehold(newHousehold);
+  }
 
   const renderContent = () => {
-    if (appState === 'pantry' && household) {
-        return <PantryView 
-                  household={household} 
-                  onLogout={handleLogout} 
-                  isNew={isNewHousehold}
-                  onAcknowledgeNew={() => setIsNewHousehold(false)}
-                />;
+    if (initialView === 'landing' && !user) {
+        return <LandingView onNavigateToApp={handleNavigateToApp} />;
     }
     
-    return <LoginView onLogin={handleLogin} onCreateHousehold={handleCreateHousehold} />;
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex justify-center items-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#84A98C]"></div>
+        </div>
+      );
+    }
+
+    if (!user) {
+      return <LoginView initialMode={authMode} />;
+    }
+
+    if (!household) {
+      return <JoinOrCreateHouseholdView user={user} onHouseholdCreated={handleHouseholdCreated} />;
+    }
+    
+    return <PantryView user={user} household={household} onLogout={handleLogout} />;
   };
 
   return renderContent();

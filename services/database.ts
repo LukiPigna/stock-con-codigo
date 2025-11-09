@@ -1,13 +1,16 @@
-import { Household, Product, ProductUnit } from '../types';
+import { Household, Product, ProductUnit, User } from '../types';
 import { firebaseConfig } from './firebaseConfig';
 
 // Declarar firebase para que TypeScript lo reconozca
 declare const firebase: any;
 
-let db: any; // Instancia de Firestore
+let db: any;
+let auth: any;
 
 const HOUSEHOLDS_COLLECTION = 'households';
 const PRODUCTS_SUBCOLLECTION = 'products';
+const USERS_COLLECTION = 'users';
+
 
 // --- Inicialización ---
 export const initDB = () => {
@@ -21,43 +24,131 @@ export const initDB = () => {
     firebase.initializeApp(firebaseConfig);
   }
   db = firebase.firestore();
+  auth = firebase.auth();
 };
 
-const generatePin = async (): Promise<string> => {
-  let pin: string;
-  let isUnique = false;
-  while (!isUnique) {
-    pin = Math.floor(1000 + Math.random() * 9000).toString();
-    const q = await db.collection(HOUSEHOLDS_COLLECTION).where('pin', '==', pin).get();
-    if (q.empty) {
-      isUnique = true;
-    }
-  }
-  return pin!;
+// --- Auth Management ---
+
+export const onAuthStateChanged = (callback: (user: User | null) => void): (() => void) => {
+    return auth.onAuthStateChanged(async (firebaseUser: any) => {
+        if (firebaseUser) {
+            const userDoc = await db.collection(USERS_COLLECTION).doc(firebaseUser.uid).get();
+            const userData = userDoc.data();
+            callback({
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                householdId: userData?.householdId,
+            });
+        } else {
+            callback(null);
+        }
+    });
+};
+
+export const signUpWithEmail = (email: string, password: string): Promise<any> => {
+    return auth.createUserWithEmailAndPassword(email, password);
 }
 
+export const signInWithEmail = (email: string, password: string): Promise<any> => {
+    return auth.signInWithEmailAndPassword(email, password);
+}
+
+export const signInWithGoogle = (): Promise<any> => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    return auth.signInWithPopup(provider);
+}
+
+export const signInAnonymously = (): Promise<any> => {
+    return auth.signInAnonymously();
+}
+
+export const signOut = (): Promise<void> => {
+    return auth.signOut();
+}
+
+// --- User Management ---
+
+export const createUserData = async (uid: string, email: string | null, displayName: string | null, householdId?: string) => {
+    const userRef = db.collection(USERS_COLLECTION).doc(uid);
+    const doc = await userRef.get();
+    if (!doc.exists) { // Create user document only if it doesn't exist
+        return userRef.set({
+            email,
+            displayName,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            householdId: householdId || null,
+        });
+    } else if (householdId) { // If user exists and is joining a household
+        return userRef.update({ householdId });
+    }
+}
+
+export const getUserData = async (uid: string): Promise<User | null> => {
+    const doc = await db.collection(USERS_COLLECTION).doc(uid).get();
+    if (doc.exists) {
+        return { uid, ...doc.data() } as User;
+    }
+    return null;
+}
 
 // --- Household Management ---
-export const loginWithPin = async (pin: string): Promise<Household | null> => {
-  const querySnapshot = await db.collection(HOUSEHOLDS_COLLECTION).where('pin', '==', pin).limit(1).get();
-  if (querySnapshot.empty) {
-    return null;
-  }
-  const doc = querySnapshot.docs[0];
-  const household = { id: doc.id, ...doc.data() } as Household;
-  return household;
-};
 
-export const createHousehold = async (name: string): Promise<Household> => {
-  const newPin = await generatePin();
+export const createHousehold = async (name: string, owner: User): Promise<Household> => {
   const newHouseholdData = {
     name,
-    pin: newPin,
-    categories: ['Esenciales', 'Boludez'],
+    ownerUid: owner.uid,
+    members: [owner.uid],
+    categories: [], // Start with no default categories
+    locations: [], // Start with no default locations
+    tutorialCompleted: false, // Flag for new user onboarding
   };
   const docRef = await db.collection(HOUSEHOLDS_COLLECTION).add(newHouseholdData);
+  
+  // Update user's document with the new householdId
+  await db.collection(USERS_COLLECTION).doc(owner.uid).update({ householdId: docRef.id });
+
   return { id: docRef.id, ...newHouseholdData };
 };
+
+
+export const getHousehold = async (householdId: string): Promise<Household | null> => {
+    const doc = await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).get();
+    if(doc.exists) {
+        return { id: doc.id, ...doc.data() } as Household;
+    }
+    return null;
+}
+
+export const addUserToHousehold = async (householdId: string, user: User) => {
+    const householdRef = db.collection(HOUSEHOLDS_COLLECTION).doc(householdId);
+    const userRef = db.collection(USERS_COLLECTION).doc(user.uid);
+
+    await db.runTransaction(async (transaction: any) => {
+        const householdDoc = await transaction.get(householdRef);
+        if (!householdDoc.exists) {
+            throw "Household does not exist!";
+        }
+
+        transaction.update(householdRef, {
+            members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+        });
+        transaction.update(userRef, { householdId: householdId });
+    });
+};
+
+export const removeUserFromHousehold = async (householdId: string, uidToRemove: string) => {
+    const householdRef = db.collection(HOUSEHOLDS_COLLECTION).doc(householdId);
+    const userRef = db.collection(USERS_COLLECTION).doc(uidToRemove);
+    
+    await db.runTransaction(async (transaction: any) => {
+         transaction.update(householdRef, {
+            members: firebase.firestore.FieldValue.arrayRemove(uidToRemove)
+        });
+        transaction.update(userRef, { householdId: null });
+    });
+}
+
 
 export const onHouseholdUpdate = (householdId: string, callback: (household: Household) => void): (() => void) => {
   const unsubscribe = db.collection(HOUSEHOLDS_COLLECTION).doc(householdId)
@@ -80,6 +171,14 @@ export const updateHousehold = async (householdId: string, data: Partial<Omit<Ho
     }
 };
 
+export const markTutorialAsCompleted = async (householdId: string) => {
+    try {
+        await db.collection(HOUSEHOLDS_COLLECTION).doc(householdId).update({ tutorialCompleted: true });
+    } catch (error) {
+        console.error("Error marking tutorial as completed:", error);
+    }
+};
+
 
 // --- Product Management (Real-time) ---
 export const onProductsUpdate = (householdId: string, callback: (products: Product[]) => void): (() => void) => {
@@ -91,17 +190,18 @@ export const onProductsUpdate = (householdId: string, callback: (products: Produ
           id: doc.id,
           ...data,
           onShoppingList: data.onShoppingList || false,
-          minimumStock: data.minimumStock !== undefined ? data.minimumStock : 0, // Default to 0 if missing
+          minimumStock: data.minimumStock !== undefined ? data.minimumStock : 0,
+          location: data.location || undefined,
       }}) as Product[];
       callback(products);
     }, (error: any) => {
       console.error("Error en la suscripción de productos:", error);
     });
 
-  return unsubscribe; // Retornamos la función para desuscribirse
+  return unsubscribe;
 };
 
-export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number): Promise<Product> => {
+export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number, location: string): Promise<Product> => {
   const newProductData: Omit<Product, 'id'> = {
     name,
     category,
@@ -110,6 +210,7 @@ export const addProduct = async (householdId: string, name: string, category: st
     note,
     onShoppingList: false,
     minimumStock,
+    location,
   };
 
   try {
@@ -117,7 +218,7 @@ export const addProduct = async (householdId: string, name: string, category: st
     return { id: docRef.id, ...newProductData, note: note || '' };
   } catch (error) {
     console.error("Error adding product to Firestore:", error);
-    throw error; // Re-throw the error so the UI can catch it
+    throw error;
   }
 };
 

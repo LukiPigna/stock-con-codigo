@@ -13,6 +13,7 @@ export interface Product {
   note?: string;
   onShoppingList: boolean;
   minimumStock?: number;
+  location?: string;
 }
 
 export enum View {
@@ -21,9 +22,19 @@ export enum View {
   SupermarketList = 'SupermarketList',
 }
 
+export interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  householdId?: string;
+}
+
 export interface Household {
   id: string;
   name: string;
-  pin: string; // 4-digit PIN
+  ownerUid: string;
+  members: string[]; // Array of user UIDs
   categories: string[];
+  locations: string[];
+  tutorialCompleted?: boolean;
 }
