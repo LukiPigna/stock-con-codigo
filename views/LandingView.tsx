@@ -4,14 +4,19 @@ interface LandingViewProps {
   onNavigateToApp: (mode: 'login' | 'signup') => void;
 }
 
-const logoBase64 = "data:image/webp;base64,UklGRqACAABXRUJQVlA4IJQCAACwDQCdASpSAFIBPlEok0UjoiGhprbuo/A/iW54VpC9hXo0i2Lcl3aF7L/t1+YD1APkA9ADmI9gD6APYA/kD8AP5I/3H/A/yR/qP+5/cPAP+L/8v/U/5P/h/7X2G/5j/j/+r/ef8L/z/9z/5v+8/7P/9/7n/9f8D///+x/7vf//4v/L/+H/q/8b/v/97/8v/38g/7v/9//X/kf+D/6Pe1/9n/R/6v/h/+n/of8P/u//F/6f+d/9f/X/4f/h/8D/6/8D/6f+5/7f/P/2//k/+P/w/9v/ev8D/6/9x/7v/A/7v/p/9f/rf91/wv/X/9f2t/gP/b/2//h/+P/o/9f/of+P/xv/n/7b/7/BZ/u/9P/yf9f/t/7r/gP/n/z//p/8v/w/93/q/+f/x/95/9/AB/sv+X/3/+T/4f+j/0P+x/9/+2f///rf//+3v+P/8HwH/If+j/q/8v/0f9j/5/wO/u//L/x/+D/5v/P/7b/5////+Xv///gA/kH/Rf9b/pf+b/8P/B/8X4G/+H/pf+B/7v/W/+b/gf///8fsB/on+g/4P/D/8L/vf+b/////+3wA/yP/nf+T/xP/S/8X/d/4//3/////+wR/nv+N/6f/B/7n/T/+L/8f///3P/9/cA/vP+f/6v/E/6//q//D/i/////+3g/yn/M/9X/k/+V/3P/J/+X/////+2L/ov+Z/6P/C/73/W/+H/////+wZ/kH+R/5v/F/7n/e/+n/////+2R/l/+J/2//D/53/b/6f///9j//f4H/q3/N/8n/i/9r/vf///8f29d10s1D/013Wy/gAZi/S/3U+4f/T/wAXJ/s9k8b3rY4iY/8XW6/R2n1t5/lD/1L/ADz13WyjW+d7u4dJbX3d8xL51mF5/t3x+G2u752vO83vC8197X3Xy328328114p9G3vW4f53H+l+H3rY9/8AFb5//q2O03n+j4/W/wA7vO+b1t14/o343N/pLd/fW3y3fH7/AIPW33bH6p7/APN/r3z+839d3h+X3rfdm3f4bf39x7p/S/zvu4v/AFPm2P8Ad3/pLfR6f9y3f63y2w8v85h+/6Ld+W3/AJr+m4//AOI7/p/3b/m/9u1v/wBtfT73/a/83//W33/xf+X/AOH2+i34+n+X/wCH/T/T8P+l+G3/AO7/ANJv8t/+H/8P0e9//j/xf/f+X/x/p/xf/F/8X/xf/H/xf+H/AOH/o/8ApP8Ap/8ApP8ApP8ApP8ApP8Ap/8A6f/p/8ApP//4f/4P/4f/g//f/1f/p//p//T//f//w//3//+r/3f9f/p//T/+f/+H//D/+H/4f/T/+H//p//AFAAAOwAA==";
+const LandingLogo = () => (
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-10 w-auto">
+        <path d="M21.3333 4.66666C21.3333 4.66666 23.3333 -1.33334 31.3333 4.66666C19.3333 10.6667 31.3333 30.6667 31.3333 30.6667C31.3333 30.6667 27.3333 19.6667 21.3333 15.6667C15.3333 11.6667 21.3333 4.66666 21.3333 4.66666Z" fill="#84A98C"/>
+        <path d="M21.3333 15.6667C21.3333 15.6667 15.3333 11.6667 11.3333 19.6667C7.33333 27.6667 19.3333 30.6667 19.3333 30.6667C19.3333 30.6667 23.3333 22.6667 21.3333 15.6667Z" fill="#A7C9AB"/>
+    </svg>
+);
 
 
 const LandingHeader: React.FC<{ onLoginClick: () => void }> = ({ onLoginClick }) => (
     <header className="bg-transparent absolute top-0 left-0 right-0 z-10">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
              <div className="flex items-center space-x-3">
-                <img src={logoBase64} alt="Prono Logo" className="h-10 w-auto" />
+                <LandingLogo />
                 <span className="text-2xl font-bold text-gray-800">Prono</span>
             </div>
             <button

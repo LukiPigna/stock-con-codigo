@@ -14,6 +14,12 @@ interface PantryViewProps {
   onLogout: () => void;
 }
 
+const getDummyExpirationDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 3); // Set to expire in 3 days to show the 'nearing' state
+    return date.toISOString().split('T')[0];
+};
+
 const DUMMY_PRODUCT: Product = {
   id: 'DUMMY_PRODUCT',
   name: 'Manzanas',
@@ -22,6 +28,7 @@ const DUMMY_PRODUCT: Product = {
   unit: ProductUnit.Units,
   onShoppingList: false,
   note: 'Producto de ejemplo',
+  expirationDate: getDummyExpirationDate(),
 };
 
 const DUMMY_HOUSEHOLD_DATA = {
@@ -192,95 +199,105 @@ const PantryView: React.FC<PantryViewProps> = ({ user, household, onLogout }) =>
   }, [startTour]);
 
   const TOUR_STEPS: TourStep[] = useMemo(() => [
-    { // 1
+    {
       title: "Paso 1: Invita a miembros",
       content: "Puedes gestionar tu despensa con más gente. Haz clic aquí para abrir los ajustes y compartir tu casa.",
       selector: '[data-tour-id="step-1-settings-button"]',
     },
-    { // 2
+    {
       title: "Paso 2: Comparte el link",
       content: "Copia y envía este link a quien quieras invitar. ¡Es así de fácil!",
       selector: '[data-tour-id="step-2-invite-button"]',
       before: () => setShowSettings(true),
     },
-    { // 3
+    {
       title: "Paso 3: Crea Ubicaciones",
       content: "Primero, crea los lugares donde guardas tus cosas, como 'Heladera' o 'Alacena'. Esto te ayudará a encontrar todo más rápido.",
       selector: '[data-tour-id="step-3-manage-locations"]',
     },
-    { // 4
+    {
       title: "Paso 4: Crea Categorías",
       content: "Ahora, organiza tus productos en categorías como 'Lácteos' o 'Limpieza'. ¡Así tu lista de compras será mucho más clara!",
       selector: '[data-tour-id="step-4-manage-categories"]',
       after: () => setShowSettings(false),
     },
-    { // 5
+    {
       title: "Paso 5: Añade un producto",
       content: "Usa este botón para añadir nuevos productos. Vamos a ver cómo se hace.",
       selector: '[data-tour-id="step-5-add-button"]',
     },
-    { // 6
+    {
       title: "Paso 6: Nombre del Producto",
       content: "Empieza por darle un nombre claro y descriptivo a tu producto.",
       selector: '[data-tour-id="tour-add-name"]',
       before: () => setIsAdding(true),
     },
-    { // 7
+    {
       title: "Paso 7: Añade una Nota",
       content: "Si necesitas recordar algo específico, como 'sin TACC' o 'comprar en la verdulería', este es el lugar.",
       selector: '[data-tour-id="tour-add-note"]',
     },
-    { // 8
+    {
       title: "Paso 8: Cantidad y Unidad",
       content: "Indica cuánto tienes ahora mismo. Puedes elegir entre unidades, gramos o kilos.",
       selector: '[data-tour-id="tour-add-quantity"]',
     },
-    { // 9
+    {
       title: "Paso 9: Stock Mínimo",
       content: "Define una cantidad mínima para recibir un aviso cuando el stock esté bajo. ¡Así nunca te quedarás sin nada!",
       selector: '[data-tour-id="tour-add-min-stock"]',
     },
-    { // 10
-      title: "Paso 10: Elige una Ubicación",
+    {
+      title: "Paso 10: Fecha de Vencimiento",
+      content: "Si el producto tiene fecha de vencimiento, añádela aquí. La aplicación te avisará cuando esté a punto de expirar.",
+      selector: '[data-tour-id="tour-add-expiration"]',
+    },
+    {
+      title: "Paso 11: Elige una Ubicación",
       content: "Asigna el producto a una de las ubicaciones que creaste, como 'Heladera' o 'Alacena'.",
       selector: '[data-tour-id="tour-add-location"]',
     },
-    { // 11
-      title: "Paso 11: Elige una Categoría",
+    {
+      title: "Paso 12: Elige una Categoría",
       content: "Finalmente, asígnale una categoría para que tu lista de compras esté siempre ordenada.",
       selector: '[data-tour-id="tour-add-categories"]',
     },
-    { // 12
-      title: "Paso 12: ¡Listo para añadir!",
+    {
+      title: "Paso 13: ¡Listo para añadir!",
       content: "Cuando termines, haz clic aquí. Para esta guía, he añadido un producto de ejemplo por ti.",
       selector: '[data-tour-id="tour-add-button"]',
       after: () => setIsAdding(false),
     },
-    { // 13
-      title: "Paso 13: Ajusta el stock",
+    {
+      title: "Paso 14: Ajusta el stock",
       content: "Modificar la cantidad es muy sencillo. Usa los botones '+' y '−' para registrar lo que consumes o compras.",
-      selector: '[data-tour-id="step-6-quantity-controls"]',
+      selector: '[data-tour-id="step-14-quantity-controls"]',
     },
-    { // 14
-      title: "Paso 14: A la lista de compras",
+    {
+      title: "Paso 15: Alerta de Vencimiento",
+      content: "¡Atención! Cuando un producto está cerca de vencer, la tarjeta cambiará de color para que lo veas a simple vista.",
+      selector: '[data-tour-id="tour-pantry-expiration-warning"]',
+    },
+    {
+      title: "Paso 16: A la lista de compras",
       content: "Cuando un producto se esté acabando, haz clic aquí para añadirlo directamente a tu lista de compras.",
-      selector: '[data-tour-id="step-7-add-to-list-button"]',
+      selector: '[data-tour-id="step-16-add-to-list-button"]',
       after: () => setTourProducts(prev => prev.map(p => p.id === 'DUMMY_PRODUCT' ? { ...p, onShoppingList: true } : p)),
     },
-    { // 15
-      title: "Paso 15: ¡Vamos al súper!",
+    {
+      title: "Paso 17: ¡Vamos al súper!",
       content: "Todos los productos que anotes aparecerán en la pestaña 'Comprar'. Vamos a ver cómo queda.",
-      selector: '[data-tour-id="step-7-shopping-list-tab"]',
+      selector: '[data-tour-id="step-17-shopping-list-tab"]',
       after: () => setActiveView(View.Shopping),
     },
-    { // 16
-      title: "Paso 16: Lista para el super",
+    {
+      title: "Paso 18: Lista para el super",
       content: "Para una vista más cómoda en el supermercado, presiona este botón y verás la lista agrupada por categorías.",
       selector: '[data-tour-id="supermarket-button"]',
       after: () => setActiveView(View.SupermarketList),
     },
-    { // 17
-      title: "Paso 17: Marca lo comprado",
+    {
+      title: "Paso 19: Marca lo comprado",
       content: "Al marcar un producto, se actualiza tu stock. Para la guía, haremos clic en Siguiente para simular la compra.",
       selector: '[data-tour-id="tour-supermarket-checkbox"]',
       after: () => {
@@ -288,19 +305,19 @@ const PantryView: React.FC<PantryViewProps> = ({ user, household, onLogout }) =>
         setTourProducts(prev => prev.map(p => p.id.startsWith('DUMMY_PRODUCT') ? { ...p, quantity: p.quantity + 2, onShoppingList: false } : p));
       },
     },
-    { // 18
-      title: "Paso 18: ¡Producto en el carrito!",
+    {
+      title: "Paso 20: ¡Producto en el carrito!",
       content: "¡Perfecto! El producto ya está marcado como comprado. Ahora volvamos para ver cómo se actualizó tu stock.",
       selector: '[data-tour-id="tour-supermarket-bought-item"]'
     },
-    { // 19
-      title: "Paso 19: Vuelve a la despensa",
+    {
+      title: "Paso 21: Vuelve a la despensa",
       content: "Usa este botón para volver a la vista principal de todos tus productos.",
       selector: '[data-tour-id="tour-supermarket-back-button"]',
       after: () => setActiveView(View.All)
     },
-    { // 20
-      title: "Paso 20: ¡Stock Actualizado!",
+    {
+      title: "Paso 22: ¡Stock Actualizado!",
       content: "¡Mira! La cantidad se ha sumado automáticamente a tu inventario. ¡Ya sabes todo lo necesario para empezar!",
       selector: '[data-tour-id="tour-pantry-updated-item"]'
     }
@@ -360,9 +377,9 @@ const PantryView: React.FC<PantryViewProps> = ({ user, household, onLogout }) =>
     }
   };
 
-  const handleAddProduct = async (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number, location: string) => {
+  const handleAddProduct = async (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number, location: string, expirationDate: string) => {
     try {
-        await DB.addProduct(household.id, name, category, unit, note, quantity, minimumStock, location);
+        await DB.addProduct(household.id, name, category, unit, note, quantity, minimumStock, location, expirationDate);
         setIsAdding(false);
     } catch (error) {
         console.error("Failed to add product:", error);
@@ -559,7 +576,7 @@ const PantryView: React.FC<PantryViewProps> = ({ user, household, onLogout }) =>
                     {displayedProducts.map(product => {
                         const isDummy = product.id.startsWith('DUMMY_PRODUCT');
                         let tourIdCardValue;
-                        if (isDummy && isTourActive && activeView === View.All && tourStep === 19) {
+                        if (isDummy && isTourActive && activeView === View.All && tourStep === 21) {
                             tourIdCardValue = 'tour-pantry-updated-item';
                         }
                         
@@ -570,8 +587,9 @@ const PantryView: React.FC<PantryViewProps> = ({ user, household, onLogout }) =>
                                   onQuantityChange={handleQuantityChange}
                                   onAddToShoppingList={handleAddToShoppingList}
                                   onRemoveFromShoppingList={handleRemoveFromShoppingList}
-                                  tourIdControls={isDummy && activeView === View.All && tourStep === 12 ? 'step-6-quantity-controls' : undefined}
-                                  tourIdButton={isDummy && activeView === View.All && tourStep === 13 ? 'step-7-add-to-list-button' : undefined}
+                                  tourIdControls={isDummy && activeView === View.All && tourStep === 13 ? 'step-14-quantity-controls' : undefined}
+                                  tourIdExpiration={isDummy && activeView === View.All && tourStep === 14 ? 'tour-pantry-expiration-warning' : undefined}
+                                  tourIdButton={isDummy && activeView === View.All && tourStep === 15 ? 'step-16-add-to-list-button' : undefined}
                                   tourIdCard={tourIdCardValue}
                                 />
                             </div>

@@ -9,6 +9,7 @@ interface ProductCardProps {
   tourIdCard?: string;
   tourIdControls?: string;
   tourIdButton?: string;
+  tourIdExpiration?: string;
 }
 
 export const categoryColorPalette = [
@@ -42,8 +43,25 @@ const getLocationIcon = (locationName?: string): string => {
     return '📍';
 };
 
+const getExpirationStatus = (dateString?: string): { status: 'none' | 'expired' | 'nearing' | 'ok'; daysLeft: number } => {
+    if (!dateString) return { status: 'none', daysLeft: Infinity };
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, onAddToShoppingList, onRemoveFromShoppingList, tourIdCard, tourIdControls, tourIdButton }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const expirationDate = new Date(dateString + 'T00:00:00'); // Handle timezone by setting time explicitly
+    expirationDate.setHours(0, 0, 0, 0);
+
+    const diffTime = expirationDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { status: 'expired', daysLeft: diffDays };
+    if (diffDays <= 7) return { status: 'nearing', daysLeft: diffDays };
+    return { status: 'ok', daysLeft: diffDays };
+};
+
+
+const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, onAddToShoppingList, onRemoveFromShoppingList, tourIdCard, tourIdControls, tourIdButton, tourIdExpiration }) => {
   const handleQuantityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const newQuantity = value === '' ? 0 : parseFloat(value);
@@ -76,7 +94,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
   };
 
   const isOutOfStock = product.quantity === 0;
-  const cardStyle = isOutOfStock ? 'opacity-60 border-red-300' : 'border-transparent';
+  const expirationInfo = getExpirationStatus(product.expirationDate);
+
+  const getCardStyle = () => {
+    if (isOutOfStock) return 'opacity-60 border-red-300';
+    if (expirationInfo.status === 'expired') return 'border-red-500 bg-red-50';
+    if (expirationInfo.status === 'nearing') return 'border-orange-400 bg-orange-50';
+    return 'border-transparent bg-white';
+  };
+  const cardStyle = getCardStyle();
   const categoryStyle = getCategoryStyle(product.category);
 
   // Expanded slider logic for units, kilograms, and grams
@@ -92,10 +118,46 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
       sliderProps = { min: 0, max: 1, step: 0.01 }; // Explicitly for kg
   }
 
+  const renderExpirationInfo = () => {
+    if (isOutOfStock || expirationInfo.status === 'none' || expirationInfo.status === 'ok') {
+        return null;
+    }
+    
+    let text = '';
+    let style = '';
+    let icon = (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clipRule="evenodd" />
+        </svg>
+    );
+
+    switch (expirationInfo.status) {
+        case 'expired':
+            text = `Venció hace ${Math.abs(expirationInfo.daysLeft)} ${Math.abs(expirationInfo.daysLeft) === 1 ? 'día' : 'días'}`;
+            style = 'text-red-700';
+            break;
+        case 'nearing':
+            if (expirationInfo.daysLeft === 0) {
+                text = 'Vence hoy';
+            } else {
+                text = `Vence en ${expirationInfo.daysLeft} ${expirationInfo.daysLeft === 1 ? 'día' : 'días'}`;
+            }
+            style = 'text-orange-700';
+            break;
+    }
+
+    return (
+        <div className={`flex items-center text-sm font-semibold mt-2 ${style}`} data-tour-id={tourIdExpiration}>
+            {icon}
+            <span>{text}</span>
+        </div>
+    );
+  };
+
 
   return (
     <div 
-      className={`bg-white rounded-xl shadow-lg p-4 flex flex-col justify-between transition-all duration-300 border-2 ${cardStyle} relative`}
+      className={`rounded-xl shadow-lg p-4 flex flex-col justify-between transition-all duration-300 border-2 ${cardStyle} relative`}
       data-tour-id={tourIdCard}
     >
       <div>
@@ -111,8 +173,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
                 <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">{product.location}</span>
             </div>
         )}
+         {renderExpirationInfo()}
          {product.note && (
-            <p className="text-sm text-gray-500 italic break-words">{product.note}</p>
+            <p className="text-sm text-gray-500 italic break-words mt-2">{product.note}</p>
         )}
         {isOutOfStock && <p className="text-red-500 text-sm font-semibold mt-1">Sin stock</p>}
       </div>
@@ -159,7 +222,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuantityChange, on
                         value={product.quantity}
                         onChange={handleQuantityInputChange}
                         onBlur={handleBlur}
-                        className="w-20 text-center bg-white rounded-md p-1 text-3xl font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#84A98C]"
+                        className="w-20 text-center bg-transparent rounded-md p-1 text-3xl font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#84A98C]"
                         step={product.unit === ProductUnit.Grams || product.unit === ProductUnit.Kilograms ? "0.1" : "1"}
                         min="0"
                     />

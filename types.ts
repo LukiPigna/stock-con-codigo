@@ -14,6 +14,7 @@ export interface Product {
   onShoppingList: boolean;
   minimumStock?: number;
   location?: string;
+  expirationDate?: string;
 }
 
 export enum View {

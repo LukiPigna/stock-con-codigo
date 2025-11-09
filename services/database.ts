@@ -192,6 +192,7 @@ export const onProductsUpdate = (householdId: string, callback: (products: Produ
           onShoppingList: data.onShoppingList || false,
           minimumStock: data.minimumStock !== undefined ? data.minimumStock : 0,
           location: data.location || undefined,
+          expirationDate: data.expirationDate || undefined,
       }}) as Product[];
       callback(products);
     }, (error: any) => {
@@ -201,7 +202,7 @@ export const onProductsUpdate = (householdId: string, callback: (products: Produ
   return unsubscribe;
 };
 
-export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number, location: string): Promise<Product> => {
+export const addProduct = async (householdId: string, name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number, location: string, expirationDate: string): Promise<Product> => {
   const newProductData: Omit<Product, 'id'> = {
     name,
     category,
@@ -211,6 +212,7 @@ export const addProduct = async (householdId: string, name: string, category: st
     onShoppingList: false,
     minimumStock,
     location,
+    expirationDate: expirationDate || undefined,
   };
 
   try {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ProductUnit } from '../types';
 
 interface AddProductModalProps {
-  onAdd: (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number, location: string) => void;
+  onAdd: (name: string, category: string, unit: ProductUnit, note: string, quantity: number, minimumStock: number, location: string, expirationDate: string) => void;
   onClose: () => void;
   categories: string[];
   locations: string[];
@@ -16,6 +16,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose, categ
   const [note, setNote] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [minimumStock, setMinimumStock] = useState('');
+  const [expirationDate, setExpirationDate] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +24,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose, categ
     const numMinimumStock = minimumStock ? parseFloat(minimumStock) : 0; // Default to 0
 
     if (name.trim() && category && !isNaN(numQuantity) && numQuantity >= 0) {
-      onAdd(name.trim(), category, unit, note.trim(), numQuantity, numMinimumStock, location);
+      onAdd(name.trim(), category, unit, note.trim(), numQuantity, numMinimumStock, location, expirationDate);
     } else if (!category) {
       alert('Por favor, crea una categoría en la configuración de la casa antes de añadir un producto.');
     }
@@ -107,6 +108,18 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onAdd, onClose, categ
                 min="0"
             />
             <p className="text-xs text-gray-500 mt-1">Recibirás un aviso para comprar cuando la cantidad llegue a este número.</p>
+          </div>
+          <div className="mb-4" data-tour-id="tour-add-expiration">
+            <label htmlFor="expirationDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Fecha de Vencimiento (Opcional)
+            </label>
+            <input
+                id="expirationDate"
+                type="date"
+                value={expirationDate}
+                onChange={(e) => setExpirationDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#84A98C] focus:border-[#84A98C] bg-white text-gray-900"
+            />
           </div>
           <div className="mb-4" data-tour-id="tour-add-location">
             <label className="block text-sm font-medium text-gray-700 mb-2">Ubicación (Opcional)</label>
