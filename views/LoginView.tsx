@@ -74,7 +74,7 @@ const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => {
         <div className="min-h-screen flex flex-col justify-center items-center bg-[#fcfaf5] p-4">
             <div className="w-full max-w-sm">
                  <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">Control de Despensa</h1>
+                    <h1 className="text-3xl font-bold text-gray-800">Prono</h1>
                     <p className="text-lg text-gray-600 mt-2">{isLogin ? 'Inicia sesión para continuar' : 'Crea una cuenta para empezar'}</p>
                 </div>
 
