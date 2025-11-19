@@ -2,69 +2,101 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prono</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Prono">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#fcfaf5">
+    
+    <title>Prono - Gestión Inteligente</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.1.1/24/outline/heroicons.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts: Inter for a more tech/clean look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0/compat"
-  }
-}
-</script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0/compat"
+      }
+    }
+    </script>
     <style>
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        :root {
+            --primary: #84A98C;
+            --primary-dark: #52796F;
+            --bg-color: #fcfaf5;
         }
 
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none; /* Elastic scroll prevention on body */
         }
 
-        /* Fix for browser autofill styles on inputs */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus, 
-        input:-webkit-autofill:active {
-            /* This is a common hack to override the background color. */
-            -webkit-box-shadow: 0 0 0 30px white inset !important;
-            /* Force a dark text color to ensure visibility against the white background. */
-            -webkit-text-fill-color: #333 !important;
+        /* Custom Scrollbar Logic */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(0,0,0,0.2); }
+
+        /* Form optimizations */
+        input, textarea, select, button {
+            font-family: inherit;
+        }
+        
+        /* iOS Input Style Fixes */
+        input[type="date"] {
+            -webkit-appearance: none;
+            min-height: 2.5rem;
         }
 
-        /* Styles for the Onboarding Guide */
+        /* Animation Utilities */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Tour Styles */
         .tour-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             z-index: 1000;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(2px); /* Glass effect */
         }
         .tour-highlight-box {
-            position: fixed;
-            z-index: 1001; /* Above overlay content, below tooltip */
-            border-radius: 6px;
-            transition: all 0.3s ease-in-out;
-            /* The magic: a huge shadow creates the overlay effect, leaving a "hole" */
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
-            pointer-events: none; /* Allows clicks to pass through to elements behind if needed */
+            position: fixed; z-index: 1001;
+            border-radius: 8px;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            background: transparent;
+            border: 2px solid white;
         }
-        .tour-tooltip {
-            z-index: 1002;
-        }
-
+        .tour-tooltip { z-index: 1002; }
+        
+        /* Utility classes */
+        .select-none { user-select: none; -webkit-user-select: none; }
+        .touch-manipulation { touch-action: manipulation; }
     </style>
 </head>
-<body class="bg-[#fcfaf5] text-[#333] font-sans">
+<body class="text-gray-800 antialiased selection:bg-[#84A98C] selection:text-white">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 
