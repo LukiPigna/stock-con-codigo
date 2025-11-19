@@ -66,7 +66,13 @@ export const onAuthStateChanged = (callback: (user: User | null) => void): (() =
                 });
             } catch (error) {
                 console.error("Error fetching user data:", error);
-                callback(null); 
+                // Fallback user object if DB fetch fails but Auth works
+                callback({
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email,
+                    displayName: firebaseUser.displayName,
+                    householdId: undefined
+                });
             }
         } else {
             callback(null);
@@ -133,8 +139,8 @@ export const createHousehold = async (name: string, owner: User): Promise<Househ
     name,
     ownerUid: owner.uid,
     members: [owner.uid],
-    categories: ['Despensa', 'Lácteos', 'Verduras', 'Carnes', 'Limpieza'], // Default categories for better UX
-    locations: ['Heladera', 'Alacena'], 
+    categories: ['Despensa', 'Lácteos', 'Verduras', 'Carnes', 'Limpieza', 'Congelados', 'Bebidas'], 
+    locations: ['Heladera', 'Alacena', 'Freezer', 'Bajo mesada'], 
     tutorialCompleted: false, 
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };

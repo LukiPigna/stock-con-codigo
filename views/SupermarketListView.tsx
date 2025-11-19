@@ -161,7 +161,7 @@ const SupermarketListView: React.FC<SupermarketListViewProps> = ({
                     <input
                         id="quantity"
                         type="number"
-                        inputMode="decimal"
+                        inputMode="decimal" // NUMERIC KEYPAD
                         value={quantityBought}
                         onChange={(e) => setQuantityBought(e.target.value)}
                         className="w-full bg-transparent border-none p-0 text-4xl font-bold text-gray-900 focus:ring-0 text-center font-mono"

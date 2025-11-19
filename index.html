@@ -8,10 +8,27 @@
     <meta name="apple-mobile-web-app-title" content="Prono">
     <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#fcfaf5">
+    <meta name="description" content="Gestión inteligente de tu despensa y lista de compras.">
     
     <title>Prono - Gestión Inteligente</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#84A98C',
+                        'primary-dark': '#52796F',
+                        'bg-color': '#fcfaf5',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.1.1/24/outline/heroicons.min.css" rel="stylesheet">
     
     <!-- Google Fonts: Inter for a more tech/clean look -->
@@ -42,6 +59,9 @@
             background-color: var(--bg-color);
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: none; /* Elastic scroll prevention on body */
+            /* Smooth text rendering */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* Custom Scrollbar Logic */
@@ -62,6 +82,7 @@
         input[type="date"] {
             -webkit-appearance: none;
             min-height: 2.5rem;
+            background-color: transparent;
         }
 
         /* Animation Utilities */
@@ -73,27 +94,61 @@
             animation: fadeIn 0.3s ease-out forwards;
         }
 
-        /* Tour Styles */
-        .tour-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 1000;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(2px); /* Glass effect */
+        /* 
+           TOUR SYSTEM - REINGENIERÍA
+           En lugar de un overlay borroso que tapa todo, usamos una "caja de luz" (box-shadow gigante)
+           en el elemento resaltado. Esto es más performante y evita problemas visuales.
+        */
+        
+        /* Esta clase se añade al BODY durante el tour para bloquear interacciones fuera del foco */
+        body.tour-active {
+            overflow: hidden;
+            pointer-events: none; /* Bloquea todo por defecto */
         }
+
+        /* El elemento resaltado y el tooltip deben ser interactivos */
+        .tour-highlight-box, .tour-tooltip {
+            pointer-events: auto; 
+        }
+        
+        /* Si necesitamos permitir clics en el elemento objetivo (debajo de la caja de luz) */
+        /* Nota: OnboardingGuide maneja la posición de la caja de luz para que no tape el contenido si es necesario */
+
         .tour-highlight-box {
-            position: fixed; z-index: 1001;
-            border-radius: 8px;
+            position: fixed; 
+            z-index: 9998;
+            border-radius: 12px;
             transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.5);
-            pointer-events: none;
+            /* El truco del spotlight: una sombra gigantesca semitransparente */
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), 0 0 15px rgba(255, 255, 255, 0.3);
+            pointer-events: none; /* Dejamos pasar los clics al elemento real */
             background: transparent;
-            border: 2px solid white;
+            border: 2px solid rgba(255, 255, 255, 0.8);
         }
-        .tour-tooltip { z-index: 1002; }
+        
+        /* Overlay invisible para bloquear inputs específicos si es necesario */
+        .tour-blocker {
+            position: absolute;
+            inset: 0;
+            z-index: 9999;
+            cursor: not-allowed;
+        }
+
+        .tour-tooltip { 
+            z-index: 9999; 
+        }
         
         /* Utility classes */
         .select-none { user-select: none; -webkit-user-select: none; }
         .touch-manipulation { touch-action: manipulation; }
+        
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
 <body class="text-gray-800 antialiased selection:bg-[#84A98C] selection:text-white">
